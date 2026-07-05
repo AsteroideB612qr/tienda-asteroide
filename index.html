@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroide B612 - Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --space-dark: #0B0E14;
+            --asteroid-brown: #8B5E3C;
+            --asteroid-light: #D1B294;
+            --rocket-red: #E63946;
+            --cosmic-cyan: #4CC9F0;
+            --star-white: #F8F9FA;
+            --whatsapp-green: #25D366;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--space-dark);
+            color: var(--star-white);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .font-display { font-family: 'Orbitron', sans-serif; }
+
+        .star-field {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%),
+            url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="10" cy="10" r="0.5" fill="white"/><circle cx="40" cy="30" r="0.8" fill="white"/><circle cx="80" cy="70" r="0.5" fill="white"/><circle cx="20" cy="80" r="0.3" fill="white"/><circle cx="90" cy="20" r="0.6" fill="white"/></svg>');
+            background-size: cover, 200px 200px;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(1.5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .float-anim { animation: float 6s ease-in-out infinite; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-rocket {
+            background: linear-gradient(135deg, var(--rocket-red) 0%, #d62828 100%);
+            box-shadow: 0 0 15px rgba(230, 57, 70, 0.5);
+            transition: all 0.3s ease;
+        }
+        .btn-rocket:hover { box-shadow: 0 0 30px rgba(230, 57, 70, 0.8); transform: scale(1.05); }
+
+        .btn-cyan {
+            background: linear-gradient(135deg, var(--cosmic-cyan) 0%, #3a86ff 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-cyan:hover { box-shadow: 0 0 20px rgba(76, 201, 240, 0.5); }
+
+        .btn-whatsapp {
+            background: linear-gradient(135deg, var(--whatsapp-green) 0%, #128C7E 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-whatsapp:hover { box-shadow: 0 0 25px rgba(37, 211, 102, 0.6); transform: scale(1.02); }
+
+        .product-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .product-card:hover {
+            border-color: var(--cosmic-cyan);
+            box-shadow: 0 10px 30px rgba(76, 201, 240, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .text-gradient {
+            background: linear-gradient(to right, var(--cosmic-cyan), var(--star-white), var(--asteroid-light));
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+
+        .logo-glow { filter: drop-shadow(0 0 25px rgba(76, 201, 240, 0.3)) drop-shadow(0 0 10px rgba(230, 57, 70, 0.3)); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--space-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--asteroid-brown); border-radius: 4px; }
+        
+        .admin-input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            color: white;
+            transition: all 0.3s;
+        }
+        .admin-input:focus { outline: none; border-color: var(--cosmic-cyan); box-shadow: 0 0 10px rgba(76, 201, 240, 0.2); }
+
+        .cart-drawer {
+            position: fixed; top: 0; right: 0; height: 100vh; width: 100%; max-width: 420px;
+            background: #0B0E14; z-index: 1000; transform: translateX(100%); transition: transform 0.3s ease-in-out;
+            display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.1);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+        .cart-drawer.open { transform: translateX(0); }
+        .cart-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .cart-overlay.open { opacity: 1; pointer-events: auto; }
+
+        .auth-modal {
+            position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center;
+        }
+        .auth-modal.open { display: flex; }
+    </style>
+</head>
+<body>
+
+    <div class="star-field"></div>
+
+    <!-- NAVBAR -->
+    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="window.switchView('store')">
+            <img src="https://z-cdn-media.chatglm.cn/files/ac4fc8d7-d188-4bf1-b0fa-7c61b8333b3d.png?auth_key=1883204905-8818e43568134af0854860fadef180f1-0-def047f9f47cbc43a01d230a0ba9b981" alt="Asteroide B612 Logo" class="h-14 w-auto object-contain">
+        </div>
+
+        <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+            <a href="#" class="hover:text-cyan-400 transition" onclick="window.switchView('store'); return false;">Inicio</a>
+            <a href="#gadgets" class="hover:text-cyan-400 transition" onclick="window.switchView('store'); return false;">Gadgets</a>
+            <button onclick="window.handleAdminClick()" class="hover:text-cyan-400 transition flex items-center gap-2 text-cyan-300 font-bold">
+                <i class="fas fa-user-shield"></i> Admin
+            </button>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button class="text-gray-300 hover:text-white"><i class="fas fa-search"></i></button>
+            <button onclick="window.toggleCart()" class="relative text-gray-300 hover:text-white">
+                <i class="fas fa-shopping-cart text-xl"></i>
+                <span id="cart-count" class="absolute -top-2 -right-3 bg-red-500 text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ====================================== -->
+    <!-- VISTA TIENDA (STORE VIEW)              -->
+    <!-- ====================================== -->
+    <div id="store-view">
+        <!-- HERO SECTION -->
+        <header class="relative min-h-[90vh] flex items-center px-6 md:px-20 py-20 overflow-hidden">
+            <div class="z-10 w-full md:w-1/2 space-y-6">
+                <span class="inline-block px-4 py-1 rounded-full text-xs font-bold tracking-widest glass text-cyan-300">
+                    BIENVENIDO A LA ESTACIÓN EXPLORADORA
+                </span>
+                <h2 class="text-5xl md:text-7xl font-black leading-tight">
+                    DESCUBRE LO QUE <span class="text-gradient">NO SABÍAS</span> QUE NECESITABAS
+                </h2>
+                <p class="text-lg text-gray-400 max-w-lg">
+                    Únete a <strong class="text-white">ORI, el Explorador B612</strong>, en una travesía por el universo de los gadgets. Tecnología, curiosidades e innovación traídas directamente desde el espacio profundo hasta tu puerta.
+                </p>
+                <div class="flex gap-4">
+                    <button onclick="document.getElementById('gadgets').scrollIntoView({behavior: 'smooth'})" class="btn-rocket px-8 py-3 rounded-full font-bold text-white flex items-center gap-2">
+                        Explorar Gadgets <i class="fas fa-meteor"></i>
+                    </button>
+                    <button class="glass px-8 py-3 rounded-full font-bold text-white hover:bg-white/10 transition">
+                        Conoce a Ori
+                    </button>
+                </div>
+            </div>
+
+            <div class="hidden md:block absolute right-0 top-1/2 transform -translate-y-1/2 w-1/2 h-[600px] flex items-center justify-center">
+                <div class="absolute w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse"></div>
+                <div class="absolute w-80 h-80 bg-red-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+                <div class="relative z-10 float-anim">
+                    <img src="https://z-cdn-media.chatglm.cn/files/ac4fc8d7-d188-4bf1-b0fa-7c61b8333b3d.png?auth_key=1883204905-8818e43568134af0854860fadef180f1-0-def047f9f47cbc43a01d230a0ba9b981" alt="Asteroide B612" class="w-[550px] max-w-full logo-glow">
+                </div>
+            </div>
+        </header>
+
+        <!-- FEATURES -->
+        <section class="px-6 md:px-20 py-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass p-6 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl"><i class="fas fa-shipping-fast"></i></div>
+                <div><h4 class="font-bold">Envío Interestelar</h4><p class="text-sm text-gray-400">Entregas rápidas a todo el planeta Tierra.</p></div>
+            </div>
+            <div class="glass p-6 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xl"><i class="fas fa-shield-alt"></i></div>
+                <div><h4 class="font-bold">Pago Seguro</h4><p class="text-sm text-gray-400">Transacciones protegidas por el vacío del espacio.</p></div>
+            </div>
+            <div class="glass p-6 rounded-2xl flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 text-xl"><i class="fas fa-star"></i></div>
+                <div><h4 class="font-bold">Curados por Ori</h4><p class="text-sm text-gray-400">Solo los gadgets más curiosos y útiles del universo.</p></div>
+            </div>
+        </section>
+
+        <!-- PRODUCTOS DINÁMICOS POR CATEGORÍA -->
+        <section id="gadgets" class="px-6 md:px-20 py-20">
+            <div class="text-center mb-16">
+                <span class="text-cyan-400 text-sm font-bold tracking-widest">CATÁLOGO ACTUAL</span>
+                <h3 class="text-4xl md:text-5xl font-black mt-2">Gadgets del Universo</h3>
+            </div>
+            <div id="categories-container" class="space-y-20"></div>
+        </section>
+
+        <!-- CTA -->
+        <section class="px-6 md:px-20 py-20">
+            <div class="glass rounded-3xl p-10 md:p-20 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl"></div>
+                <div class="absolute left-0 bottom-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl"></div>
+                <div class="z-10 md:w-2/3 mb-10 md:mb-0">
+                    <h3 class="text-3xl md:text-5xl font-black mb-4">¿Listo para despegar?</h3>
+                    <p class="text-gray-300 text-lg mb-6">Suscríbete al registro del Asteroide B612 y recibe un <strong class="text-cyan-400">10% de descuento</strong> en tu primer gadget.</p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <input type="email" placeholder="Tu correo terrestre..." class="px-6 py-3 rounded-full bg-white/10 border border-white/20 focus:outline-none focus:border-cyan-400 flex-grow text-white">
+                        <button class="btn-rocket px-8 py-3 rounded-full font-bold text-white whitespace-nowrap">Unirse a la misión</button>
+                    </div>
+                </div>
+                <div class="z-10 hidden md:block float-anim">
+                    <img src="https://z-cdn-media.chatglm.cn/files/ac4fc8d7-d188-4bf1-b0fa-7c61b8333b3d.png?auth_key=1883204905-8818e43568134af0854860fadef180f1-0-def047f9f47cbc43a01d230a0ba9b981" alt="Asteroide B612" class="w-64 logo-glow">
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ====================================== -->
+    <!-- VISTA ADMINISTRADOR (ADMIN VIEW)      -->
+    <!-- ====================================== -->
+    <div id="admin-view" class="hidden px-6 md:px-20 py-10 min-h-screen">
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-4xl font-black text-gradient">Panel de Administración</h2>
+                <p class="text-gray-400 mt-2">Gestiona los gadgets de tu universo.</p>
+            </div>
+            <div class="flex gap-4 items-center">
+                <button onclick="window.logoutAdmin()" class="glass px-4 py-3 rounded-full font-bold hover:bg-red-500/20 hover:text-red-400 flex items-center gap-2 text-sm">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+                <button onclick="window.switchView('store')" class="glass px-6 py-3 rounded-full font-bold hover:bg-white/10 flex items-center gap-2">
+                    <i class="fas fa-store"></i> Ver Tienda
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1">
+                <div class="glass p-6 rounded-2xl sticky top-24">
+                    <h3 id="form-title" class="text-2xl font-bold mb-6 text-cyan-300">Agregar Nuevo Gadget</h3>
+                    <form id="product-form" onsubmit="window.saveProduct(event)">
+                        <input type="hidden" id="product-id">
+                        <input type="hidden" id="hidden-img-url">
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm mb-2 text-gray-300">Nombre del Producto</label>
+                            <input type="text" id="product-name" class="admin-input" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm mb-2 text-gray-300">Categoría</label>
+                            <input type="text" id="product-category" class="admin-input" placeholder="Ej: Audio, Hogar, Tech" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm mb-2 text-gray-300">Descripción</label>
+                            <textarea id="product-desc" rows="3" class="admin-input" required></textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm mb-2 text-gray-300">Precio (Soles)</label>
+                            <input type="number" step="0.01" id="product-price" class="admin-input" required>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-sm mb-2 text-gray-300">Imagen del Producto</label>
+                            <input type="file" id="product-img" accept="image/*" class="admin-input text-sm pt-2">
+                            <p id="file-help-text" class="text-xs text-gray-500 mt-2">Selecciona una foto de tu computadora (Máx 1MB).</p>
+                            <img id="preview-img" src="" class="hidden mt-2 w-20 h-20 object-cover rounded-lg">
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button id="submit-btn" type="submit" class="btn-cyan w-full px-4 py-3 rounded-lg font-bold flex items-center justify-center gap-2">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                            <button type="button" onclick="window.resetForm()" class="glass px-4 py-3 rounded-lg hover:bg-white/10">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2">
+                <div class="glass p-6 rounded-2xl overflow-x-auto">
+                    <h3 class="text-2xl font-bold mb-6">Inventario Actual</h3>
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-white/10 text-gray-400">
+                                <th class="py-3 px-2">Imagen</th>
+                                <th class="py-3 px-2">Nombre</th>
+                                <th class="py-3 px-2">Categoría</th>
+                                <th class="py-3 px-2">Precio</th>
+                                <th class="py-3 px-2 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-product-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================== -->
+    <!-- MODAL DE LOGIN (AUTH)                 -->
+    <!-- ====================================== -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="glass p-8 rounded-2xl max-w-sm w-full mx-4 text-center">
+            <div class="w-16 h-16 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-2xl mx-auto mb-6">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h3 class="text-2xl font-display font-bold mb-2">Acceso Restringido</h3>
+            <p class="text-gray-400 text-sm mb-6">Ingresa tu correo y contraseña de administrador.</p>
+            <input type="email" id="admin-email" class="admin-input text-center mb-3" placeholder="Correo electrónico">
+            <input type="password" id="admin-pass" class="admin-input text-center mb-4" placeholder="Contraseña">
+            <div id="auth-error" class="text-red-400 text-sm mb-4 hidden">Credenciales incorrectas. Intenta de nuevo.</div>
+            <div class="flex gap-2">
+                <button onclick="window.closeAuthModal()" class="glass flex-1 py-3 rounded-lg hover:bg-white/10">Cancelar</button>
+                <button onclick="window.checkAuth()" class="btn-cyan flex-1 py-3 rounded-lg font-bold">Ingresar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================== -->
+    <!-- CARRITO DE COMPRAS (DRAWER)           -->
+    <!-- ====================================== -->
+    <div id="cart-overlay" class="cart-overlay" onclick="window.toggleCart()"></div>
+    <div id="cart-drawer" class="cart-drawer">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center">
+            <h3 class="text-2xl font-bold font-display">Tu Carrito</h3>
+            <button onclick="window.toggleCart()" class="text-gray-400 hover:text-white text-2xl"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="cart-items" class="flex-grow p-6 overflow-y-auto space-y-4"></div>
+        <div class="p-6 border-t border-white/10 bg-black/30">
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-lg text-gray-300">Total:</span>
+                <span id="cart-total" class="text-2xl font-display font-bold text-cyan-300">S/ 0.00</span>
+            </div>
+            <button onclick="window.checkoutWhatsApp()" class="btn-whatsapp w-full py-4 rounded-full font-bold text-white flex items-center justify-center gap-3 text-lg">
+                <i class="fab fa-whatsapp text-2xl"></i> Comprar por WhatsApp
+            </button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="px-6 md:px-20 py-12 border-t border-white/10">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+            <div>
+                <img src="https://z-cdn-media.chatglm.cn/files/ac4fc8d7-d188-4bf1-b0fa-7c61b8333b3d.png?auth_key=1883204905-8818e43568134af0854860fadef180f1-0-def047f9f47cbc43a01d230a0ba9b981" alt="Logo B612" class="h-16 w-auto mb-4">
+                <p class="text-sm text-gray-400">Lo que no sabías que necesitabas... a un click.</p>
+            </div>
+            <div>
+                <h5 class="font-bold mb-4">Explorar</h5>
+                <ul class="space-y-2 text-sm text-gray-400">
+                    <li class="hover:text-white cursor-pointer">Inicio</li>
+                    <li class="hover:text-white cursor-pointer">Catálogo</li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-bold mb-4">Ayuda</h5>
+                <ul class="space-y-2 text-sm text-gray-400">
+                    <li class="hover:text-white cursor-pointer">Seguimiento</li>
+                    <li class="hover:text-white cursor-pointer">Contacto</li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-bold mb-4">Síguenos</h5>
+                <div class="flex gap-4">
+                    <a href="#" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-cyan-500/20 hover:text-cyan-400 transition"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-cyan-500/20 hover:text-cyan-400 transition"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-white/10 pt-6 text-center text-xs text-gray-500">© 2024 Asteroide B612. Todos los derechos reservados.</div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Tu configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZLvGKHsLEwmcbtj0K0OP6ZObDOeadtOQ",
+            authDomain: "asteroideb612.firebaseapp.com",
+            projectId: "asteroideb612",
+            storageBucket: "asteroideb612.firebasestorage.app",
+            messagingSenderId: "250595266468",
+            appId: "1:250595266468:web:d2afa268fed017115bbb31",
+            measurementId: "G-VH0YKEZK59"
+        };
+
+        // Inicializar Firebase (Sin Storage para evitar pedir tarjeta)
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Variables globales
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('b612_cart')) || [];
+        let isAdmin = false;
+        const WHATSAPP_NUMBER = "1234567890"; // CAMBIA ESTO POR TU NÚMERO
+
+        // Función para comprimir imagen y convertirla a Base64
+        function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Redimensionar a máximo 600px de ancho para que pese poco
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_WIDTH = 600;
+                        
+                        if (width > MAX_WIDTH) {
+                            height = (height * MAX_WIDTH) / width;
+                            width = MAX_WIDTH;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convertir a JPEG con calidad 0.8 (80%) para reducir peso
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                        resolve(dataUrl);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Hacer funciones accesibles globalmente
+        window.handleAdminClick = function() {
+            if (isAdmin) {
+                window.switchView('admin');
+            } else {
+                document.getElementById('auth-modal').classList.add('open');
+                document.getElementById('admin-email').value = '';
+                document.getElementById('admin-pass').value = '';
+                document.getElementById('auth-error').classList.add('hidden');
+                setTimeout(() => document.getElementById('admin-email').focus(), 100);
+            }
+        }
+
+        window.checkAuth = async function() {
+            const email = document.getElementById('admin-email').value;
+            const pass = document.getElementById('admin-pass').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                window.closeAuthModal();
+                window.switchView('admin');
+            } catch (error) {
+                document.getElementById('auth-error').classList.remove('hidden');
+            }
+        }
+
+        window.closeAuthModal = function() {
+            document.getElementById('auth-modal').classList.remove('open');
+        }
+
+        window.logoutAdmin = async function() {
+            await signOut(auth);
+            isAdmin = false;
+            window.switchView('store');
+        }
+
+        window.switchView = function(view) {
+            if(view === 'admin' && isAdmin) {
+                document.getElementById('store-view').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
+                window.renderAdmin();
+            } else if (view === 'store') {
+                document.getElementById('admin-view').classList.add('hidden');
+                document.getElementById('store-view').classList.remove('hidden');
+                window.renderStore();
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                isAdmin = true;
+            } else {
+                isAdmin = false;
+            }
+        });
+
+        const q = query(collection(db, "products"));
+        onSnapshot(q, (snapshot) => {
+            products = [];
+            snapshot.forEach((doc) => {
+                products.push({ id: doc.id, ...doc.data() });
+            });
+            window.renderStore();
+            if (!document.getElementById('admin-view').classList.contains('hidden')) {
+                window.renderAdmin();
+            }
+        });
+
+        window.renderStore = function() {
+            const container = document.getElementById('categories-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            if (products.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 col-span-full"><i class="fas fa-meteor text-4xl mb-4"></i><p>Aún no hay gadgets en la nave. Agrega algunos desde el Panel de Admin.</p></div>`;
+                return;
+            }
+
+            const categories = [...new Set(products.map(p => p.category))];
+
+            categories.forEach(cat => {
+                const productsInCat = products.filter(p => p.category === cat);
+                const sectionWrapper = document.createElement('div');
+                sectionWrapper.innerHTML = `
+                    <h4 class="text-2xl md:text-3xl font-bold mb-8 pl-4 border-l-4 border-cyan-400 flex items-center gap-3">
+                        ${cat} <span class="text-sm font-normal text-gray-500">(${productsInCat.length} productos)</span>
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                        ${productsInCat.map(p => `
+                            <div class="product-card rounded-2xl overflow-hidden flex flex-col">
+                                <div class="aspect-square bg-gray-900 overflow-hidden relative">
+                                    <img src="${p.img}" alt="${p.name}" class="w-full h-full object-cover opacity-90 hover:scale-110 hover:opacity-100 transition duration-500">
+                                </div>
+                                <div class="p-5 flex-grow flex flex-col">
+                                    <h4 class="font-bold text-lg mb-1">${p.name}</h4>
+                                    <p class="text-gray-400 text-sm mb-4 flex-grow">${p.desc}</p>
+                                    <div class="flex justify-between items-center mt-auto">
+                                        <span class="text-xl font-display font-bold text-cyan-300">S/ ${p.price.toFixed(2)}</span>
+                                        <button onclick="window.addToCart('${p.id}')" class="w-10 h-10 rounded-full btn-rocket flex items-center justify-center">
+                                            <i class="fas fa-plus text-white"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(sectionWrapper);
+            });
+        }
+
+        window.renderAdmin = function() {
+            const tbody = document.getElementById('admin-product-list');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4">No hay productos. Agrega el primero arriba.</td></tr>`;
+                return;
+            }
+
+            products.forEach(p => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-white/5 hover:bg-white/5">
+                        <td class="py-3 px-2"><img src="${p.img}" class="w-12 h-12 object-cover rounded-lg"></td>
+                        <td class="py-3 px-2 font-medium">${p.name}</td>
+                        <td class="py-3 px-2"><span class="px-2 py-1 bg-cyan-500/20 text-cyan-300 text-xs rounded-full">${p.category}</span></td>
+                        <td class="py-3 px-2 font-bold">S/ ${p.price.toFixed(2)}</td>
+                        <td class="py-3 px-2 text-right whitespace-nowrap">
+                            <button onclick="window.editProduct('${p.id}')" class="text-yellow-400 hover:text-yellow-300 mr-4"><i class="fas fa-edit"></i></button>
+                            <button onclick="window.deleteProduct('${p.id}')" class="text-red-400 hover:text-red-300"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.saveProduct = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('product-id').value;
+            const name = document.getElementById('product-name').value;
+            const category = document.getElementById('product-category').value;
+            const desc = document.getElementById('product-desc').value;
+            const price = parseFloat(document.getElementById('product-price').value);
+            const fileInput = document.getElementById('product-img');
+            
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            submitBtn.disabled = true;
+
+            try {
+                let imgUrl = document.getElementById('hidden-img-url').value;
+
+                if (fileInput.files[0]) {
+                    // Comprimir la imagen en lugar de usar Storage
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando Imagen...';
+                    imgUrl = await compressImage(fileInput.files[0]);
+                }
+
+                if (!imgUrl) {
+                    alert("Por favor selecciona una imagen para el producto.");
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                const productData = { name, category, desc, price, img: imgUrl };
+
+                if (id) {
+                    await updateDoc(doc(db, "products", id), productData);
+                } else {
+                    await addDoc(collection(db, "products"), productData);
+                }
+
+                window.resetForm();
+            } catch (error) {
+                console.error("Error al guardar: ", error);
+                alert("Hubo un error al guardar. Si la imagen es muy pesada, intenta con una más ligera.");
+            } finally {
+                submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+                submitBtn.disabled = false;
+            }
+        }
+
+        window.editProduct = function(id) {
+            const p = products.find(p => p.id === id);
+            document.getElementById('product-id').value = p.id;
+            document.getElementById('product-name').value = p.name;
+            document.getElementById('product-category').value = p.category;
+            document.getElementById('product-desc').value = p.desc;
+            document.getElementById('product-price').value = p.price;
+            document.getElementById('hidden-img-url').value = p.img;
+            document.getElementById('file-help-text').innerText = "Imagen actual cargada. Selecciona una nueva solo si quieres reemplazarla.";
+            document.getElementById('preview-img').src = p.img;
+            document.getElementById('preview-img').classList.remove('hidden');
+            document.getElementById('form-title').innerText = "Editando Gadget";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.deleteProduct = async function(id) {
+            if(confirm("¿Eliminar este gadget del inventario?")) {
+                await deleteDoc(doc(db, "products", id));
+            }
+        }
+
+        window.resetForm = function() {
+            document.getElementById('product-form').reset();
+            document.getElementById('product-id').value = '';
+            document.getElementById('hidden-img-url').value = '';
+            document.getElementById('file-help-text').innerText = "Selecciona una foto de tu computadora (Máx 1MB).";
+            document.getElementById('preview-img').src = '';
+            document.getElementById('preview-img').classList.add('hidden');
+            document.getElementById('form-title').innerText = "Agregar Nuevo Gadget";
+        }
+
+        // CARRITO
+        window.addToCart = function(id) {
+            const product = products.find(p => p.id === id);
+            if(!product) return;
+            const cartItem = cart.find(item => item.id === id);
+
+            if (cartItem) {
+                cartItem.qty++;
+            } else {
+                cart.push({ id: product.id, name: product.name, price: product.price, img: product.img, qty: 1 });
+            }
+            localStorage.setItem('b612_cart', JSON.stringify(cart));
+            window.renderCart();
+            
+            const btn = event.currentTarget;
+            btn.innerHTML = '<i class="fas fa-check text-white"></i>';
+            setTimeout(() => { btn.innerHTML = '<i class="fas fa-plus text-white"></i>'; }, 1000);
+        }
+
+        window.updateQty = function(id, change) {
+            let cartItem = cart.find(item => item.id === id);
+            if (cartItem) {
+                cartItem.qty += change;
+                if (cartItem.qty <= 0) {
+                    cart = cart.filter(item => item.id !== id);
+                }
+            }
+            localStorage.setItem('b612_cart', JSON.stringify(cart));
+            window.renderCart();
+        }
+
+        window.renderCart = function() {
+            const cartItemsDiv = document.getElementById('cart-items');
+            const cartCount = document.getElementById('cart-count');
+            const cartTotal = document.getElementById('cart-total');
+            
+            cartItemsDiv.innerHTML = '';
+            let total = 0;
+            let totalItems = 0;
+
+            if (cart.length === 0) {
+                cartItemsDiv.innerHTML = `<div class="text-center text-gray-500 mt-10"><i class="fas fa-meteor text-4xl mb-4"></i><p>Tu asteroide está vacío</p></div>`;
+            } else {
+                cart.forEach(item => {
+                    total += item.price * item.qty;
+                    totalItems += item.qty;
+                    cartItemsDiv.innerHTML += `
+                        <div class="flex gap-4 items-center bg-white/5 p-3 rounded-xl">
+                            <img src="${item.img}" class="w-16 h-16 object-cover rounded-lg">
+                            <div class="flex-grow">
+                                <h5 class="font-bold text-sm">${item.name}</h5>
+                                <p class="text-cyan-300 text-sm">S/ ${item.price.toFixed(2)}</p>
+                                <div class="flex items-center gap-3 mt-2">
+                                    <button onclick="window.updateQty('${item.id}', -1)" class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><i class="fas fa-minus text-xs"></i></button>
+                                    <span class="font-bold">${item.qty}</span>
+                                    <button onclick="window.updateQty('${item.id}', 1)" class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><i class="fas fa-plus text-xs"></i></button>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-bold text-sm">S/ ${(item.price * item.qty).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            cartCount.innerText = totalItems;
+            cartTotal.innerText = `S/ ${total.toFixed(2)}`;
+        }
+
+        window.toggleCart = function() {
+            document.getElementById('cart-drawer').classList.toggle('open');
+            document.getElementById('cart-overlay').classList.toggle('open');
+        }
+
+        window.checkoutWhatsApp = function() {
+            if (cart.length === 0) {
+                alert("Tu carrito está vacío. Agrega algunos gadgets primero.");
+                return;
+            }
+
+            let message = "¡Hola Asteroide B612! 🚀 Quiero hacer el siguiente pedido:%0A%0A";
+            let total = 0;
+
+            cart.forEach(item => {
+                message += `*${item.qty}x ${item.name}*%0A`;
+                message += `Precio: S/ ${(item.price * item.qty).toFixed(2)}%0A%0A`;
+                total += item.price * item.qty;
+            });
+
+            message += `*Total a pagar: S/ ${total.toFixed(2)}*%0A%0A`;
+            message += "¿Cómo procedemos con el pago y el envío? 🪐";
+
+            const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+            window.open(waUrl, '_blank');
+        }
+
+        document.getElementById('admin-pass').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') window.checkAuth();
+        });
+
+        window.renderCart();
+    </script>
+</body>
+</html>
