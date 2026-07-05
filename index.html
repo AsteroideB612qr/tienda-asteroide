@@ -127,13 +127,13 @@
 
     <!-- NAVBAR -->
     <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center gap-3 cursor-pointer" onclick="window.switchView('store')">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="window.goToTop()">
             <img src="https://z-cdn-media.chatglm.cn/files/ac4fc8d7-d188-4bf1-b0fa-7c61b8333b3d.png?auth_key=1883204905-8818e43568134af0854860fadef180f1-0-def047f9f47cbc43a01d230a0ba9b981" alt="Asteroide B612 Logo" class="h-14 w-auto object-contain">
         </div>
 
         <div class="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#" class="hover:text-cyan-400 transition" onclick="window.switchView('store'); return false;">Inicio</a>
-            <a href="#gadgets" class="hover:text-cyan-400 transition" onclick="window.switchView('store'); return false;">Gadgets</a>
+            <a href="#" class="hover:text-cyan-400 transition" onclick="window.goToTop(); return false;">Inicio</a>
+            <a href="#" class="hover:text-cyan-400 transition" onclick="window.goToProducts(); return false;">Gadgets</a>
             <button onclick="window.handleAdminClick()" class="hover:text-cyan-400 transition flex items-center gap-2 text-cyan-300 font-bold">
                 <i class="fas fa-user-shield"></i> Admin
             </button>
@@ -165,7 +165,7 @@
                     Únete a <strong class="text-white">ORI, el Explorador B612</strong>, en una travesía por el universo de los gadgets. Tecnología, curiosidades e innovación traídas directamente desde el espacio profundo hasta tu puerta.
                 </p>
                 <div class="flex gap-4">
-                    <button onclick="document.getElementById('gadgets').scrollIntoView({behavior: 'smooth'})" class="btn-rocket px-8 py-3 rounded-full font-bold text-white flex items-center gap-2">
+                    <button onclick="window.goToProducts()" class="btn-rocket px-8 py-3 rounded-full font-bold text-white flex items-center gap-2">
                         Explorar Gadgets <i class="fas fa-meteor"></i>
                     </button>
                     <button class="glass px-8 py-3 rounded-full font-bold text-white hover:bg-white/10 transition">
@@ -187,7 +187,7 @@
         <section class="px-6 md:px-20 py-10 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="glass p-6 rounded-2xl flex items-center gap-4">
                 <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl"><i class="fas fa-shipping-fast"></i></div>
-                <div><h4 class="font-bold">Envío Interestelar</h4><p class="text-sm text-gray-400">Entregas rápidas a todo el planeta Tierra.</p></div>
+                <div><h4 class="font-bold">Entregas y Recojo</h4><p class="text-sm text-gray-400">Coordina por WhatsApp: envío por delivery, movilidad propia o recojo en San Isidro.</p></div>
             </div>
             <div class="glass p-6 rounded-2xl flex items-center gap-4">
                 <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-xl"><i class="fas fa-shield-alt"></i></div>
@@ -215,11 +215,11 @@
                 <div class="absolute left-0 bottom-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl"></div>
                 <div class="z-10 md:w-2/3 mb-10 md:mb-0">
                     <h3 class="text-3xl md:text-5xl font-black mb-4">¿Listo para despegar?</h3>
-                    <p class="text-gray-300 text-lg mb-6">Suscríbete al registro del Asteroide B612 y recibe un <strong class="text-cyan-400">10% de descuento</strong> en tu primer gadget.</p>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <input type="email" placeholder="Tu correo terrestre..." class="px-6 py-3 rounded-full bg-white/10 border border-white/20 focus:outline-none focus:border-cyan-400 flex-grow text-white">
-                        <button class="btn-rocket px-8 py-3 rounded-full font-bold text-white whitespace-nowrap">Unirse a la misión</button>
-                    </div>
+                    <p class="text-gray-300 text-lg mb-6">Suscríbete al registro del Asteroide B612 y recibe promociones y descuentos especiales.</p>
+                    <form onsubmit="window.saveSubscriber(event)" class="flex flex-col sm:flex-row gap-4 w-full">
+                        <input type="text" id="subscriber-input" placeholder="Tu correo o WhatsApp..." class="px-6 py-3 rounded-full bg-white/10 border border-white/20 focus:outline-none focus:border-cyan-400 flex-grow text-white" required>
+                        <button type="submit" class="btn-rocket px-8 py-3 rounded-full font-bold text-white whitespace-nowrap">Unirse a la misión</button>
+                    </form>
                 </div>
                 <div class="z-10 hidden md:block float-anim">
                     <img src="https://z-cdn-media.chatglm.cn/files/ac4fc8d7-d188-4bf1-b0fa-7c61b8333b3d.png?auth_key=1883204905-8818e43568134af0854860fadef180f1-0-def047f9f47cbc43a01d230a0ba9b981" alt="Asteroide B612" class="w-64 logo-glow">
@@ -245,6 +245,25 @@
                     <i class="fas fa-store"></i> Ver Tienda
                 </button>
             </div>
+        </div>
+
+        <!-- TABLA DE SUSCRIPTORES -->
+        <div class="glass p-6 rounded-2xl overflow-x-auto mb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Lista de Suscriptores</h3>
+                <button onclick="window.exportSubscribers()" class="btn-cyan px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                    <i class="fas fa-download"></i> Exportar CSV
+                </button>
+            </div>
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-white/10 text-gray-400">
+                        <th class="py-3 px-2">Contacto (Correo / WhatsApp)</th>
+                        <th class="py-3 px-2">Fecha de Registro</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-subscribers-list"></tbody>
+            </table>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -365,22 +384,22 @@
             <div>
                 <h5 class="font-bold mb-4">Explorar</h5>
                 <ul class="space-y-2 text-sm text-gray-400">
-                    <li class="hover:text-white cursor-pointer">Inicio</li>
-                    <li class="hover:text-white cursor-pointer">Catálogo</li>
+                    <li><a href="#" onclick="window.goToTop(); return false;" class="hover:text-white cursor-pointer">Inicio</a></li>
+                    <li><a href="#" onclick="window.goToProducts(); return false;" class="hover:text-white cursor-pointer">Catálogo</a></li>
                 </ul>
             </div>
             <div>
                 <h5 class="font-bold mb-4">Ayuda</h5>
                 <ul class="space-y-2 text-sm text-gray-400">
-                    <li class="hover:text-white cursor-pointer">Seguimiento</li>
-                    <li class="hover:text-white cursor-pointer">Contacto</li>
+                    <li><a href="https://wa.me/51984908819?text=Hola%20Asteroide%20B612,%20necesito%20informaci%C3%B3n" target="_blank" class="hover:text-white cursor-pointer">WhatsApp</a></li>
+                    <li><a href="mailto:asteroide.b612.qr@gmail.com" class="hover:text-white cursor-pointer">Correo Electrónico</a></li>
                 </ul>
             </div>
             <div>
                 <h5 class="font-bold mb-4">Síguenos</h5>
                 <div class="flex gap-4">
-                    <a href="#" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-cyan-500/20 hover:text-cyan-400 transition"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-cyan-500/20 hover:text-cyan-400 transition"><i class="fab fa-tiktok"></i></a>
+                    <a href="https://www.instagram.com/asteroideb612qr/" target="_blank" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-cyan-500/20 hover:text-cyan-400 transition"><i class="fab fa-instagram"></i></a>
+                    <a href="https://wa.me/51984908819" target="_blank" class="w-10 h-10 glass rounded-full flex items-center justify-center hover:bg-green-500/20 hover:text-green-400 transition"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
         </div>
@@ -390,9 +409,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Tu configuración de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCZLvGKHsLEwmcbtj0K0OP6ZObDOeadtOQ",
             authDomain: "asteroideb612.firebaseapp.com",
@@ -403,18 +421,16 @@
             measurementId: "G-VH0YKEZK59"
         };
 
-        // Inicializar Firebase (Sin Storage para evitar pedir tarjeta)
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Variables globales
         let products = [];
+        let subscribers = [];
         let cart = JSON.parse(localStorage.getItem('b612_cart')) || [];
         let isAdmin = false;
-        const WHATSAPP_NUMBER = "1234567890"; // CAMBIA ESTO POR TU NÚMERO
+        const WHATSAPP_NUMBER = "51984908819"; // Tu número actualizado
 
-        // Función para comprimir imagen y convertirla a Base64
         function compressImage(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -423,22 +439,16 @@
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
-                        
-                        // Redimensionar a máximo 600px de ancho para que pese poco
                         let width = img.width;
                         let height = img.height;
                         const MAX_WIDTH = 600;
-                        
                         if (width > MAX_WIDTH) {
                             height = (height * MAX_WIDTH) / width;
                             width = MAX_WIDTH;
                         }
-                        
                         canvas.width = width;
                         canvas.height = height;
                         ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // Convertir a JPEG con calidad 0.8 (80%) para reducir peso
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
                         resolve(dataUrl);
                     };
@@ -449,7 +459,19 @@
             });
         }
 
-        // Hacer funciones accesibles globalmente
+        // Navegación
+        window.goToTop = function() {
+            window.switchView('store');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.goToProducts = function() {
+            window.switchView('store');
+            setTimeout(() => {
+                document.getElementById('gadgets').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
         window.handleAdminClick = function() {
             if (isAdmin) {
                 window.switchView('admin');
@@ -474,15 +496,8 @@
             }
         }
 
-        window.closeAuthModal = function() {
-            document.getElementById('auth-modal').classList.remove('open');
-        }
-
-        window.logoutAdmin = async function() {
-            await signOut(auth);
-            isAdmin = false;
-            window.switchView('store');
-        }
+        window.closeAuthModal = function() { document.getElementById('auth-modal').classList.remove('open'); }
+        window.logoutAdmin = async function() { await signOut(auth); isAdmin = false; window.switchView('store'); }
 
         window.switchView = function(view) {
             if(view === 'admin' && isAdmin) {
@@ -496,38 +511,81 @@
             }
         }
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                isAdmin = true;
-            } else {
-                isAdmin = false;
-            }
-        });
+        onAuthStateChanged(auth, (user) => { isAdmin = user ? true : false; });
 
+        // Productos en tiempo real
         const q = query(collection(db, "products"));
         onSnapshot(q, (snapshot) => {
             products = [];
-            snapshot.forEach((doc) => {
-                products.push({ id: doc.id, ...doc.data() });
-            });
+            snapshot.forEach((doc) => products.push({ id: doc.id, ...doc.data() }));
             window.renderStore();
-            if (!document.getElementById('admin-view').classList.contains('hidden')) {
-                window.renderAdmin();
-            }
+            if (!document.getElementById('admin-view').classList.contains('hidden')) window.renderAdmin();
         });
+
+        // Suscriptores en tiempo real
+        const subQ = query(collection(db, "subscribers"));
+        onSnapshot(subQ, (snapshot) => {
+            subscribers = [];
+            snapshot.forEach((doc) => subscribers.push({ id: doc.id, ...doc.data() }));
+            if (!document.getElementById('admin-view').classList.contains('hidden')) window.renderSubscribers();
+        });
+
+        window.saveSubscriber = async function(e) {
+            e.preventDefault();
+            const contact = document.getElementById('subscriber-input').value;
+            try {
+                await addDoc(collection(db, "subscribers"), { contact: contact, date: new Date().toLocaleString() });
+                document.getElementById('subscriber-input').value = '';
+                alert("¡Gracias por unirte a la misión! 🚀 Pronto recibirás nuestras promociones.");
+            } catch (err) {
+                alert("Hubo un error al guardar tu dato. Inténtalo de nuevo.");
+            }
+        }
+
+        window.renderSubscribers = function() {
+            const tbody = document.getElementById('admin-subscribers-list');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (subscribers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="2" class="text-center text-gray-500 py-4">Aún no hay suscriptores.</td></tr>`;
+                return;
+            }
+            subscribers.forEach(s => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-white/5 hover:bg-white/5">
+                        <td class="py-3 px-2 font-medium">${s.contact}</td>
+                        <td class="py-3 px-2 text-gray-400">${s.date || 'Reciente'}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.exportSubscribers = function() {
+            if (subscribers.length === 0) {
+                alert("No hay suscriptores para exportar aún.");
+                return;
+            }
+            let csv = "Contacto,Fecha\n";
+            subscribers.forEach(s => {
+                csv += `"${s.contact}","${s.date || ''}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'suscriptores_asteroide_b612.csv');
+            link.click();
+        }
 
         window.renderStore = function() {
             const container = document.getElementById('categories-container');
             if (!container) return;
             container.innerHTML = '';
-            
             if (products.length === 0) {
                 container.innerHTML = `<div class="text-center text-gray-500 col-span-full"><i class="fas fa-meteor text-4xl mb-4"></i><p>Aún no hay gadgets en la nave. Agrega algunos desde el Panel de Admin.</p></div>`;
                 return;
             }
-
             const categories = [...new Set(products.map(p => p.category))];
-
             categories.forEach(cat => {
                 const productsInCat = products.filter(p => p.category === cat);
                 const sectionWrapper = document.createElement('div');
@@ -563,12 +621,10 @@
             const tbody = document.getElementById('admin-product-list');
             if (!tbody) return;
             tbody.innerHTML = '';
-            
             if (products.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center text-gray-500 py-4">No hay productos. Agrega el primero arriba.</td></tr>`;
                 return;
             }
-
             products.forEach(p => {
                 tbody.innerHTML += `
                     <tr class="border-b border-white/5 hover:bg-white/5">
@@ -583,6 +639,7 @@
                     </tr>
                 `;
             });
+            window.renderSubscribers();
         }
 
         window.saveProduct = async function(e) {
@@ -593,35 +650,28 @@
             const desc = document.getElementById('product-desc').value;
             const price = parseFloat(document.getElementById('product-price').value);
             const fileInput = document.getElementById('product-img');
-            
             const submitBtn = document.getElementById('submit-btn');
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
             submitBtn.disabled = true;
 
             try {
                 let imgUrl = document.getElementById('hidden-img-url').value;
-
                 if (fileInput.files[0]) {
-                    // Comprimir la imagen en lugar de usar Storage
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando Imagen...';
                     imgUrl = await compressImage(fileInput.files[0]);
                 }
-
                 if (!imgUrl) {
                     alert("Por favor selecciona una imagen para el producto.");
                     submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar';
                     submitBtn.disabled = false;
                     return;
                 }
-
                 const productData = { name, category, desc, price, img: imgUrl };
-
                 if (id) {
                     await updateDoc(doc(db, "products", id), productData);
                 } else {
                     await addDoc(collection(db, "products"), productData);
                 }
-
                 window.resetForm();
             } catch (error) {
                 console.error("Error al guardar: ", error);
@@ -648,9 +698,7 @@
         }
 
         window.deleteProduct = async function(id) {
-            if(confirm("¿Eliminar este gadget del inventario?")) {
-                await deleteDoc(doc(db, "products", id));
-            }
+            if(confirm("¿Eliminar este gadget del inventario?")) await deleteDoc(doc(db, "products", id));
         }
 
         window.resetForm = function() {
@@ -663,20 +711,14 @@
             document.getElementById('form-title').innerText = "Agregar Nuevo Gadget";
         }
 
-        // CARRITO
         window.addToCart = function(id) {
             const product = products.find(p => p.id === id);
             if(!product) return;
             const cartItem = cart.find(item => item.id === id);
-
-            if (cartItem) {
-                cartItem.qty++;
-            } else {
-                cart.push({ id: product.id, name: product.name, price: product.price, img: product.img, qty: 1 });
-            }
+            if (cartItem) cartItem.qty++;
+            else cart.push({ id: product.id, name: product.name, price: product.price, img: product.img, qty: 1 });
             localStorage.setItem('b612_cart', JSON.stringify(cart));
             window.renderCart();
-            
             const btn = event.currentTarget;
             btn.innerHTML = '<i class="fas fa-check text-white"></i>';
             setTimeout(() => { btn.innerHTML = '<i class="fas fa-plus text-white"></i>'; }, 1000);
@@ -686,9 +728,7 @@
             let cartItem = cart.find(item => item.id === id);
             if (cartItem) {
                 cartItem.qty += change;
-                if (cartItem.qty <= 0) {
-                    cart = cart.filter(item => item.id !== id);
-                }
+                if (cartItem.qty <= 0) cart = cart.filter(item => item.id !== id);
             }
             localStorage.setItem('b612_cart', JSON.stringify(cart));
             window.renderCart();
@@ -698,11 +738,9 @@
             const cartItemsDiv = document.getElementById('cart-items');
             const cartCount = document.getElementById('cart-count');
             const cartTotal = document.getElementById('cart-total');
-            
             cartItemsDiv.innerHTML = '';
             let total = 0;
             let totalItems = 0;
-
             if (cart.length === 0) {
                 cartItemsDiv.innerHTML = `<div class="text-center text-gray-500 mt-10"><i class="fas fa-meteor text-4xl mb-4"></i><p>Tu asteroide está vacío</p></div>`;
             } else {
@@ -728,7 +766,6 @@
                     `;
                 });
             }
-
             cartCount.innerText = totalItems;
             cartTotal.innerText = `S/ ${total.toFixed(2)}`;
         }
@@ -739,31 +776,21 @@
         }
 
         window.checkoutWhatsApp = function() {
-            if (cart.length === 0) {
-                alert("Tu carrito está vacío. Agrega algunos gadgets primero.");
-                return;
-            }
-
+            if (cart.length === 0) { alert("Tu carrito está vacío. Agrega algunos gadgets primero."); return; }
             let message = "¡Hola Asteroide B612! 🚀 Quiero hacer el siguiente pedido:%0A%0A";
             let total = 0;
-
             cart.forEach(item => {
                 message += `*${item.qty}x ${item.name}*%0A`;
                 message += `Precio: S/ ${(item.price * item.qty).toFixed(2)}%0A%0A`;
                 total += item.price * item.qty;
             });
-
             message += `*Total a pagar: S/ ${total.toFixed(2)}*%0A%0A`;
             message += "¿Cómo procedemos con el pago y el envío? 🪐";
-
             const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
             window.open(waUrl, '_blank');
         }
 
-        document.getElementById('admin-pass').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') window.checkAuth();
-        });
-
+        document.getElementById('admin-pass').addEventListener('keypress', function(e) { if (e.key === 'Enter') window.checkAuth(); });
         window.renderCart();
     </script>
 </body>
