@@ -37,10 +37,7 @@
         .auth-modal { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; }
         .auth-modal.open { display: flex; }
         .grab-handle { cursor: grab; } .grab-handle:active { cursor: grabbing; } .sortable-ghost { opacity: 0.3; background: rgba(76, 201, 240, 0.2); }
-        
-        /* Estilos del Dashboard Financiero (Dark Mode adaptado) */
         .tab-btn.active { background-color: var(--rocket-red); color: white; box-shadow: 0 4px 14px rgba(230, 57, 70, 0.3); }
-        .fin-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); }
         .fin-table-head { background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
         .fin-row { border-bottom: 1px solid rgba(255,255,255,0.05); }
         .fin-row:hover { background: rgba(255,255,255,0.02); }
@@ -113,13 +110,11 @@
     <!-- PANEL ADMIN -->
     <div id="admin-view" class="hidden px-6 md:px-20 py-10 min-h-screen">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-            <div>
-                <h2 class="text-4xl font-black text-gradient">Panel de Administración</h2>
-                <p class="text-gray-400 mt-2">Gestiona tu universo y tus finanzas.</p>
-            </div>
+            <div><h2 class="text-4xl font-black text-gradient">Panel de Administración</h2><p class="text-gray-400 mt-2">Gestiona tu universo y tus finanzas.</p></div>
             <div class="flex flex-wrap gap-3 items-center">
                 <button onclick="window.switchAdminTab('productos')" id="tab-btn-productos" class="px-4 py-2 rounded-full font-bold text-sm glass hover:bg-white/10">Tienda</button>
                 <button onclick="window.switchAdminTab('finanzas')" id="tab-btn-finanzas" class="px-4 py-2 rounded-full font-bold text-sm glass hover:bg-white/10">Finanzas</button>
+                <button onclick="window.switchAdminTab('suscriptores')" id="tab-btn-suscriptores" class="px-4 py-2 rounded-full font-bold text-sm glass hover:bg-white/10">Suscriptores</button>
                 <button onclick="window.logoutAdmin()" class="glass px-4 py-3 rounded-full font-bold hover:bg-red-500/20 hover:text-red-400 flex items-center gap-2 text-sm"><i class="fas fa-sign-out-alt"></i> Salir</button>
                 <button onclick="window.switchView('store')" class="glass px-6 py-3 rounded-full font-bold hover:bg-white/10 flex items-center gap-2"><i class="fas fa-store"></i> Ver Tienda</button>
             </div>
@@ -127,18 +122,6 @@
 
         <!-- SUB-VISTA: TIENDA -->
         <div id="admin-productos-view">
-            <div class="glass p-6 rounded-2xl mb-10 overflow-hidden">
-                <div class="flex justify-between items-center cursor-pointer" onclick="window.toggleSubscribers()">
-                    <h3 class="text-2xl font-bold flex items-center gap-3">Lista de Suscriptores <span id="sub-count" class="text-sm font-normal text-gray-500 bg-white/10 px-2 py-1 rounded-full">0</span></h3>
-                    <div class="flex items-center gap-4">
-                        <button onclick="event.stopPropagation(); window.exportSubscribers()" class="btn-cyan px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"><i class="fas fa-download"></i> Exportar</button>
-                        <i id="sub-chevron" class="fas fa-chevron-down transition-transform text-gray-400"></i>
-                    </div>
-                </div>
-                <div id="sub-content" class="hidden mt-6 overflow-x-auto">
-                    <table class="w-full text-left"><thead><tr class="border-b border-white/10 text-gray-400"><th class="py-3 px-2">Contacto</th><th class="py-3 px-2">Fecha</th></tr></thead><tbody id="admin-subscribers-list"></tbody></table>
-                </div>
-            </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-1">
                     <div class="glass p-6 rounded-2xl sticky top-24">
@@ -163,6 +146,17 @@
             </div>
         </div>
 
+        <!-- SUB-VISTA: SUSCRIPTORES -->
+        <div id="admin-suscriptores-view" class="hidden">
+            <div class="glass p-6 rounded-2xl overflow-hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">Lista de Suscriptores</h3>
+                    <button onclick="window.exportSubscribers()" class="btn-cyan px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2"><i class="fas fa-download"></i> Exportar CSV</button>
+                </div>
+                <table class="w-full text-left"><thead><tr class="border-b border-white/10 text-gray-400"><th class="py-3 px-2">Contacto</th><th class="py-3 px-2">Fecha</th></tr></thead><tbody id="admin-subscribers-list"></tbody></table>
+            </div>
+        </div>
+
         <!-- SUB-VISTA: FINANZAS (DASHBOARD) -->
         <div id="admin-finanzas-view" class="hidden">
             <div class="glass rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -177,13 +171,13 @@
             </div>
 
             <div class="flex gap-2 mb-6 overflow-x-auto">
-                <button onclick="switchFinTab('resumen')" id="fbtn-resumen" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Resumen</button>
+                <button onclick="switchFinTab('resumen')" id="fbtn-resumen" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium active">Resumen</button>
                 <button onclick="switchFinTab('capital')" id="fbtn-capital" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Capital</button>
                 <button onclick="switchFinTab('compras')" id="fbtn-compras" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Compras</button>
                 <button onclick="switchFinTab('ventas')" id="fbtn-ventas" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Ventas</button>
                 <button onclick="switchFinTab('gastos')" id="fbtn-gastos" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Gastos</button>
                 <button onclick="switchFinTab('mensual')" id="fbtn-mensual" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Mensual</button>
-                <button onclick="switchFinTab('inventario')" id="fbtn-inventario" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Inventario</button>
+                <button onclick="switchFinTab('inventario')" id="fbtn-inventario" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Inventario Físico</button>
             </div>
 
             <!-- Resumen -->
@@ -313,7 +307,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCZLvGKHsLEwmcbtj0K0OP6ZObDOeadtOQ", authDomain: "asteroideb612.firebaseapp.com", projectId: "asteroideb612", storageBucket: "asteroideb612.firebasestorage.app", messagingSenderId: "250595266468", appId: "1:250595266468:web:d2afa268fed017115bbb31", measurementId: "G-VH0YKEZK59" };
         const app = initializeApp(firebaseConfig);
@@ -321,10 +315,26 @@
         const db = getFirestore(app);
 
         let products = []; let subscribers = []; let cart = JSON.parse(localStorage.getItem('b612_cart')) || []; let isAdmin = false;
-        let finState = { capital: 0, compras: [], ventas: [], gastos: [] }; // Estado de Finanzas
+        let finState = { capital: 0, compras: [], ventas: [], gastos: [] };
+        let sortableInstance = null;
         const WHATSAPP_NUMBER = "51984908819";
 
-        // --- FUNCIONES TIENDA ---
+        function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                        let width = img.width, height = img.height; const MAX_WIDTH = 600;
+                        if (width > MAX_WIDTH) { height = (height * MAX_WIDTH) / width; width = MAX_WIDTH; }
+                        canvas.width = width; canvas.height = height; ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    }; img.src = event.target.result;
+                }; reader.onerror = reject; reader.readAsDataURL(file);
+            });
+        }
+
         window.goToTop = function() { window.switchView('store'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
         window.goToProducts = function() { window.switchView('store'); setTimeout(() => document.getElementById('gadgets').scrollIntoView({ behavior: 'smooth' }), 100); }
         window.handleAdminClick = function() { if (isAdmin) window.switchView('admin'); else { document.getElementById('auth-modal').classList.add('open'); document.getElementById('admin-email').focus(); } }
@@ -334,34 +344,87 @@
         window.switchView = function(view) { if(view === 'admin' && isAdmin) { document.getElementById('store-view').classList.add('hidden'); document.getElementById('admin-view').classList.remove('hidden'); } else { document.getElementById('admin-view').classList.add('hidden'); document.getElementById('store-view').classList.remove('hidden'); } }
         
         window.switchAdminTab = function(tab) {
-            document.getElementById('admin-productos-view').classList.toggle('hidden', tab !== 'productos');
-            document.getElementById('admin-finanzas-view').classList.toggle('hidden', tab !== 'finanzas');
-            document.getElementById('tab-btn-productos').classList.toggle('btn-cyan', tab === 'productos');
-            document.getElementById('tab-btn-finanzas').classList.toggle('btn-cyan', tab === 'finanzas');
-            if (tab === 'finanzas') updateAllDOM(); 
+            ['productos', 'finanzas', 'suscriptores'].forEach(t => {
+                document.getElementById(`admin-${t}-view`).classList.toggle('hidden', tab !== t);
+                document.getElementById(`tab-btn-${t}`).classList.toggle('btn-cyan', tab === t);
+            });
+            if (tab === 'finanzas') updateAllDOM();
         }
 
         onAuthStateChanged(auth, (user) => { isAdmin = user ? true : false; });
 
-        // Firestore Listeners
-        const prodRef = doc(db, "data", "products");
-        onSnapshot(prodRef, (snap) => { if(snap.exists()) products = snap.data().list || []; window.renderStore(); window.renderAdmin(); });
-        
-        const subRef = doc(db, "data", "subscribers");
-        onSnapshot(subRef, (snap) => { if(snap.exists()) subscribers = snap.data().list || []; window.renderSubscribers(); });
+        // Listeners de Firebase
+        const q = query(collection(db, "products"));
+        onSnapshot(q, (snapshot) => {
+            products = [];
+            snapshot.forEach((d) => products.push({ id: d.id, ...d.data() }));
+            products.sort((a, b) => (a.order || 999999) - (b.order || 999999));
+            window.renderStore();
+            if (!document.getElementById('admin-productos-view').classList.contains('hidden')) window.renderAdmin();
+        });
+
+        const subQ = query(collection(db, "subscribers"));
+        onSnapshot(subQ, (snapshot) => {
+            subscribers = [];
+            snapshot.forEach((d) => subscribers.push(d.data()));
+            if (!document.getElementById('admin-suscriptores-view').classList.contains('hidden')) window.renderSubscribers();
+        });
 
         const finRef = doc(db, "data", "finances");
-        onSnapshot(finRef, (snap) => { if(snap.exists()) finState = snap.data(); updateAllDOM(); });
+        onSnapshot(finRef, (snap) => {
+            if (snap.exists()) {
+                finState = snap.data();
+                updateAllDOM();
+            }
+        });
 
-        window.saveSubscriber = async function(e) { e.preventDefault(); subscribers.push({contact: document.getElementById('subscriber-input').value, date: new Date().toLocaleString()}); await setDoc(subRef, {list: subscribers}); alert("¡Gracias por unirte! 🚀"); document.getElementById('subscriber-input').value=''; }
-        window.renderSubscribers = function() { const t = document.getElementById('admin-subscribers-list'); document.getElementById('sub-count').innerText = subscribers.length; t.innerHTML = subscribers.length ? subscribers.map(s=>`<tr class="fin-row"><td class="p-3">${s.contact}</td><td class="p-3 text-gray-400">${s.date||''}</td></tr>`).join('') : `<tr><td colspan="2" class="p-4 text-center text-gray-500">Sin datos</td></tr>`; }
-        window.exportSubscribers = function() { if(!subscribers.length) return alert("Sin datos"); let csv="Contacto,Fecha\n"; subscribers.forEach(s=>csv+=`"${s.contact}","${s.date||''}"\n`); let link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download='suscriptores.csv'; link.click(); }
-        window.toggleSubscribers = function() { document.getElementById('sub-content').classList.toggle('hidden'); document.getElementById('sub-chevron').classList.toggle('rotate-180'); }
-
+        // --- TIENDA CRUD ---
+        window.saveProduct = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('product-id').value;
+            const name = document.getElementById('product-name').value, category = document.getElementById('product-category').value, desc = document.getElementById('product-desc').value, price = parseFloat(document.getElementById('product-price').value);
+            const fileInput = document.getElementById('product-img'); const submitBtn = document.getElementById('submit-btn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'; submitBtn.disabled = true;
+            try {
+                let imgUrl = document.getElementById('hidden-img-url').value;
+                if (fileInput.files[0]) { submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...'; imgUrl = await compressImage(fileInput.files[0]); }
+                if (!imgUrl) { alert("Selecciona una imagen."); submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar'; submitBtn.disabled = false; return; }
+                const productData = { name, category, desc, price, img: imgUrl };
+                if (id) await updateDoc(doc(db, "products", id), productData);
+                else { productData.order = products.length; await addDoc(collection(db, "products"), productData); }
+                window.resetForm();
+            } catch (error) { alert("Error al guardar."); }
+            finally { submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar'; submitBtn.disabled = false; }
+        }
+        window.editProduct = function(id) {
+            const p = products.find(p => p.id === id);
+            document.getElementById('product-id').value = p.id; document.getElementById('product-name').value = p.name; document.getElementById('product-category').value = p.category; document.getElementById('product-desc').value = p.desc; document.getElementById('product-price').value = p.price; document.getElementById('hidden-img-url').value = p.img;
+            document.getElementById('preview-img').src = p.img; document.getElementById('preview-img').classList.remove('hidden');
+            document.getElementById('form-title').innerText = "Editando Gadget"; window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        window.deleteProduct = async function(id) { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, "products", id)); }
+        window.resetForm = function() { document.getElementById('product-form').reset(); document.getElementById('product-id').value = ''; document.getElementById('hidden-img-url').value = ''; document.getElementById('preview-img').src = ''; document.getElementById('preview-img').classList.add('hidden'); document.getElementById('form-title').innerText = "Agregar Nuevo Gadget"; }
+        window.renderAdmin = function() {
+            const t = document.getElementById('admin-product-list');
+            t.innerHTML = products.length ? products.map(p=>`<tr data-id="${p.id}" class="fin-row"><td class="py-3 px-2 grab-handle text-gray-500"><i class="fas fa-grip-vertical"></i></td><td class="py-3 px-2"><img src="${p.img}" class="w-12 h-12 object-cover rounded-lg"></td><td class="py-3 px-2 font-medium">${p.name}</td><td class="py-3 px-2"><span class="badge-green px-2 py-1 rounded-full text-xs">${p.category}</span></td><td class="py-3 px-2 font-bold">S/ ${p.price.toFixed(2)}</td><td class="py-3 px-2 text-right"><button onclick="window.editProduct('${p.id}')" class="text-yellow-400 mr-2"><i class="fas fa-edit"></i></button><button onclick="window.deleteProduct('${p.id}')" class="text-red-400"><i class="fas fa-trash"></i></button></td></tr>`).join('') : `<tr><td colspan="6" class="text-center text-gray-500 p-4">Sin productos</td></tr>`;
+            if (sortableInstance) sortableInstance.destroy();
+            sortableInstance = Sortable.create(t, {
+                handle: '.grab-handle', animation: 150,
+                onEnd: async function (evt) {
+                    const rows = t.querySelectorAll('tr'); const updates = [];
+                    rows.forEach((row, index) => { const id = row.getAttribute('data-id'); updates.push(updateDoc(doc(db, "products", id), { order: index })); });
+                    try { await Promise.all(updates); } catch (e) { alert("Error al guardar orden: " + e.message); }
+                }
+            });
+        }
         window.renderStore = function() { const c = document.getElementById('categories-container'); c.innerHTML=''; if(!products.length) return c.innerHTML=`<p class="text-center text-gray-500">Sin productos.</p>`; [...new Set(products.map(p=>p.category))].forEach(cat=>{ const ps=products.filter(p=>p.category===cat); c.innerHTML+=`<div><h4 class="text-2xl font-bold mb-8 pl-4 border-l-4 border-cyan-400">${cat}</h4><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">${ps.map(p=>`<div class="product-card rounded-2xl overflow-hidden flex flex-col"><div class="aspect-square bg-gray-900 overflow-hidden"><img src="${p.img}" class="w-full h-full object-cover opacity-90 hover:scale-110 transition"></div><div class="p-5 flex-grow flex flex-col"><h4 class="font-bold text-lg mb-1">${p.name}</h4><p class="text-gray-400 text-sm mb-4 flex-grow">${p.desc}</p><div class="flex justify-between items-center mt-auto"><span class="text-xl font-display font-bold text-cyan-300">S/ ${p.price.toFixed(2)}</span><button onclick="window.addToCart('${p.id}')" class="w-10 h-10 rounded-full btn-rocket flex items-center justify-center"><i class="fas fa-plus text-white"></i></button></div></div></div>`).join('')}</div></div>`; }); }
-        window.renderAdmin = function() { const t = document.getElementById('admin-product-list'); if(!t) return; t.innerHTML = products.length ? products.map(p=>`<tr data-id="${p.id}" class="fin-row"><td class="py-3 px-2 grab-handle text-gray-500"><i class="fas fa-grip-vertical"></i></td><td class="py-3 px-2"><img src="${p.img}" class="w-12 h-12 object-cover rounded-lg"></td><td class="py-3 px-2 font-medium">${p.name}</td><td class="py-3 px-2"><span class="badge-green px-2 py-1 rounded-full text-xs">${p.category}</span></td><td class="py-3 px-2 font-bold">S/ ${p.price.toFixed(2)}</td><td class="py-3 px-2 text-right"><button class="text-yellow-400 mr-2"><i class="fas fa-edit"></i></button><button class="text-red-400"><i class="fas fa-trash"></i></button></td></tr>`).join('') : `<tr><td colspan="6" class="text-center text-gray-500 p-4">Sin productos</td></tr>`; }
 
-        // Cart Logic
+        // --- SUSCRIPTORES ---
+        window.saveSubscriber = async function(e) { e.preventDefault(); await addDoc(collection(db, "subscribers"), { contact: document.getElementById('subscriber-input').value, date: new Date().toLocaleString() }); alert("¡Gracias por unirte! 🚀"); document.getElementById('subscriber-input').value=''; }
+        window.renderSubscribers = function() { const t = document.getElementById('admin-subscribers-list'); t.innerHTML = subscribers.length ? subscribers.map(s=>`<tr class="fin-row"><td class="p-3">${s.contact}</td><td class="p-3 text-gray-400">${s.date||''}</td></tr>`).join('') : `<tr><td colspan="2" class="p-4 text-center text-gray-500">Sin datos</td></tr>`; }
+        window.exportSubscribers = function() { if(!subscribers.length) return alert("Sin datos"); let csv="Contacto,Fecha\n"; subscribers.forEach(s=>csv+=`"${s.contact}","${s.date||''}"\n`); let link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download='suscriptores.csv'; link.click(); }
+
+        // --- CARRITO ---
         window.addToCart = function(id) { const p = products.find(p=>p.id===id); if(!p) return; let item = cart.find(i=>i.id===id); if(item) item.qty++; else cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1}); localStorage.setItem('b612_cart', JSON.stringify(cart)); window.renderCart(); }
         window.renderCart = function() { const c = document.getElementById('cart-items'); let total=0, items=0; c.innerHTML = cart.length ? cart.map(i=>{ total+=i.price*i.qty; items+=i.qty; return `<div class="flex gap-4 items-center bg-white/5 p-3 rounded-xl"><img src="${i.img}" class="w-16 h-16 object-cover rounded-lg"><div><h5 class="font-bold text-sm">${i.name}</h5><p class="text-cyan-300 text-sm">S/ ${i.price.toFixed(2)}</p></div><div class="ml-auto text-right"><span class="font-bold">S/ ${(i.price*i.qty).toFixed(2)}</span></div></div>`; }).join('') : `<p class="text-center text-gray-500 mt-10">Vacío</p>`; document.getElementById('cart-count').innerText=items; document.getElementById('cart-total').innerText=`S/ ${total.toFixed(2)}`; }
         window.toggleCart = function() { document.getElementById('cart-drawer').classList.toggle('open'); document.getElementById('cart-overlay').classList.toggle('open'); }
@@ -376,30 +439,42 @@
         async function saveFinances() { await setDoc(finRef, finState); updateAllDOM(); updateCharts(); }
         
         window.exportarDatosUSB = function() { const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(finState, null, 2)); const a = document.createElement('a'); a.href=d; a.download="asteroide_balance.json"; a.click(); }
-        window.importarDatosUSB = function(e) { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = async function(ev) { try { finState = JSON.parse(ev.target.result); await saveFinances(); alert("¡Datos sincronizados a la nube!"); } catch(e){ alert("Error"); } }; r.readAsText(f); }
+        window.importarDatosUSB = function(e) { 
+            const f = e.target.files[0]; if(!f) return; 
+            const r = new FileReader(); 
+            r.onload = async function(ev) { 
+                try { 
+                    const parsed = JSON.parse(ev.target.result);
+                    if (parsed && parsed.compras) {
+                        finState = parsed; 
+                        await saveFinances(); 
+                        alert("¡Datos sincronizados a la nube!"); 
+                    } else {
+                        alert("El archivo no parece ser un backup válido del dashboard.");
+                    }
+                } catch(err) { alert("Error al leer el JSON: " + err.message); } 
+            }; 
+            r.readAsText(f); 
+        }
         
         function switchFinTab(id) { document.querySelectorAll('[id^="ftab-"]').forEach(el=>el.classList.add('hidden')); document.querySelectorAll('[id^="fbtn-"]').forEach(el=>el.classList.remove('active')); document.getElementById('ftab-'+id).classList.remove('hidden'); document.getElementById('fbtn-'+id).classList.add('active'); if(id==='resumen') updateCharts(); }
         window.switchFinTab = switchFinTab;
 
         window.saveCapital = async function(e) { e.preventDefault(); finState.capital = parseFloat(document.getElementById('input-capital').value)||0; await saveFinances(); alert('Capital fijado.'); }
         
-        // Compras
         window.saveCompra = function(e) { e.preventDefault(); const p = document.getElementById('compra-producto').value; const c = parseInt(document.getElementById('compra-cantidad').value); const pc = parseFloat(document.getElementById('compra-precio-c').value); const pv = parseFloat(document.getElementById('compra-precio-v').value); const f = document.getElementById('compra-img-file'); if(f.files[0]){ const r=new FileReader(); r.onload=async function(ev){ execAddCom(p,c,pc,pv,ev.target.result); }; r.readAsDataURL(f.files[0]); } else { execAddCom(p,c,pc,pv,'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=100&q=80'); } }
         async function execAddCom(p,c,pc,pv,img) { for(let i=0;i<c;i++){ finState.compras.push({id:'REC-'+Date.now()+'-'+Math.random(), producto:p, precioC:pc, precioV:pv, img:img, estado:'STOCK', ventaId:null}); } document.getElementById('form-compra').reset(); await saveFinances(); }
         window.deleteCompra = async function(id) { if(confirm('¿Eliminar?')){ finState.compras = finState.compras.filter(c=>c.id!==id); await saveFinances(); } }
 
-        // Ventas
         window.handleVentaProductChange = function() { const v = document.getElementById('venta-producto').value; const d = finState.compras.filter(c=>c.producto===v && c.estado==='STOCK'); document.getElementById('venta-stock-disp').innerText=d.length; if(d.length){ document.getElementById('venta-p-compra-auto').innerText=`S/ ${d[0].precioC.toFixed(2)}`; document.getElementById('venta-precio').value=d[0].precioV; } }
         window.saveVenta = async function(e) { e.preventDefault(); const p=document.getElementById('venta-producto').value; const c=parseInt(document.getElementById('venta-cantidad').value); const pv=parseFloat(document.getElementById('venta-precio').value); const m=document.getElementById('venta-mes').value; const cond=document.getElementById('venta-condicion').value; const d=finState.compras.filter(x=>x.producto===p && x.estado==='STOCK'); if(c>d.length) return alert('Stock insuficiente.'); const vid='V-'+Date.now(); const ids=[]; for(let i=0;i<c;i++){ d[i].estado='VENDIDO'; d[i].ventaId=vid; ids.push(d[i].id); } finState.ventas.push({id:vid, producto:p, cantidad:c, precioV:pv, mes:m, condicion:cond, comprasAsociadasIds:ids}); document.getElementById('form-venta').reset(); await saveFinances(); }
         window.liquidarCobroVenta = async function(id) { const v=finState.ventas.find(x=>x.id===id); if(v){ v.condicion='PAGADO'; await saveFinances(); } }
         window.deleteVenta = async function(id) { if(confirm('¿Eliminar?')){ finState.compras.forEach(c=>{ if(c.ventaId===id){ c.estado='STOCK'; c.ventaId=null; } }); finState.ventas=finState.ventas.filter(v=>v.id!==id); await saveFinances(); } }
 
-        // Gastos
         window.saveGasto = async function(e) { e.preventDefault(); finState.gastos.push({id:'G-'+Date.now(), concepto:document.getElementById('gasto-concepto').value, monto:parseFloat(document.getElementById('gasto-monto').value), mes:document.getElementById('gasto-mes').value}); document.getElementById('form-gasto').reset(); await saveFinances(); }
         window.deleteGasto = async function(id) { if(confirm('¿Eliminar?')){ finState.gastos=finState.gastos.filter(g=>g.id!==id); await saveFinances(); } }
 
         function updateAllDOM() {
-            if (document.getElementById('admin-finanzas-view').classList.contains('hidden')) return;
             const cap = finState.capital || 0; const stock = finState.compras.filter(c=>c.estado==='STOCK').reduce((a,c)=>a+c.precioC,0);
             const vPag = finState.ventas.filter(v=>v.condicion==='PAGADO'||!v.condicion); const vPend = finState.ventas.filter(v=>v.condicion==='PENDIENTE');
             const tVen = vPag.reduce((a,v)=>a+(v.precioV*v.cantidad),0); const tGto = finState.gastos.reduce((a,g)=>a+g.monto,0);
@@ -407,29 +482,34 @@
             const mPend = vPend.reduce((a,v)=>a+(v.precioV*v.cantidad),0); let cPend=0, gPend=0; vPend.forEach(v=>{ const cL=finState.compras.filter(c=>c.ventaId===v.id).reduce((a,c)=>a+c.precioC,0); cPend+=cL; gPend+=(v.precioV*v.cantidad)-cL; });
             const liq = cap - stock - cPend;
 
-            document.getElementById('nav-liquidez').innerText = liq.toFixed(2);
-            document.getElementById('nav-por-cobrar').innerText = mPend.toFixed(2);
-            document.getElementById('card-capital').innerText = `S/ ${cap.toFixed(2)}`;
-            document.getElementById('card-liquidez').innerText = `S/ ${liq.toFixed(2)}`;
-            document.getElementById('card-mercancia').innerText = `S/ ${stock.toFixed(2)}`;
-            document.getElementById('card-total-vendido').innerText = `S/ ${tVen.toFixed(2)}`;
-            document.getElementById('card-total-egresos').innerText = `S/ ${tGto.toFixed(2)}`;
-            document.getElementById('card-ganancia').innerText = `S/ ${gReal.toFixed(2)}`;
+            const elLiq = document.getElementById('nav-liquidez'); if(elLiq) elLiq.innerText = liq.toFixed(2);
+            const elPC = document.getElementById('nav-por-cobrar'); if(elPC) elPC.innerText = mPend.toFixed(2);
+            const elCap = document.getElementById('card-capital'); if(elCap) elCap.innerText = `S/ ${cap.toFixed(2)}`;
+            const elLiq2 = document.getElementById('card-liquidez'); if(elLiq2) elLiq2.innerText = `S/ ${liq.toFixed(2)}`;
+            const elMerc = document.getElementById('card-mercancia'); if(elMerc) elMerc.innerText = `S/ ${stock.toFixed(2)}`;
+            const elVen = document.getElementById('card-total-vendido'); if(elVen) elVen.innerText = `S/ ${tVen.toFixed(2)}`;
+            const elEgr = document.getElementById('card-total-egresos'); if(elEgr) elEgr.innerText = `S/ ${tGto.toFixed(2)}`;
+            const elGan = document.getElementById('card-ganancia'); if(elGan) elGan.innerText = `S/ ${gReal.toFixed(2)}`;
 
             renderComprasTable(); renderVentasTable(); renderGastosTable(); renderMensualTable(); renderInventarioTable(); updateDatalists();
         }
 
-        function updateDatalists() { const dl = document.getElementById('productos-existentes'); dl.innerHTML=''; [...new Set(finState.compras.map(c=>c.producto))].forEach(n=>{ const o=document.createElement('option'); o.value=n; dl.appendChild(o); }); const sel = document.getElementById('venta-producto'); const cur=sel.value; sel.innerHTML='<option value="">--</option>'; [...new Set(finState.compras.filter(c=>c.estado==='STOCK').map(c=>c.producto))].forEach(n=>{ const o=document.createElement('option'); o.value=n; o.innerText=n; sel.appendChild(o); }); sel.value=cur; }
-        function renderComprasTable() { const t=document.getElementById('table-compras-body'); t.innerHTML=''; const s=document.getElementById('search-compras').value.toLowerCase(); let f=finState.compras; if(s) f=f.filter(c=>c.producto.toLowerCase().includes(s)); if(!f.length) return t.innerHTML=`<tr><td colspan="7" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; f.slice().reverse().forEach(c=>{ t.innerHTML+=`<tr class="fin-row"><td class="p-4 text-xs text-gray-400">${c.id.substring(0,8)}</td><td class="p-4"><img src="${c.img}" class="w-10 h-10 rounded-lg"></td><td class="p-4 font-medium">${c.producto}</td><td class="p-4">S/ ${c.precioC.toFixed(2)}</td><td class="p-4">S/ ${c.precioV.toFixed(2)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${c.estado==='STOCK'?'badge-yellow':'bg-slate-700 text-slate-400'}">${c.estado}</span></td><td class="p-4 text-right"><button class="text-red-400" onclick="deleteCompra('${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
-        function renderVentasTable() { const t=document.getElementById('table-ventas-body'); t.innerHTML=''; const s=document.getElementById('search-ventas').value.toLowerCase(); let f=finState.ventas; if(s) f=f.filter(v=>v.producto.toLowerCase().includes(s)); if(!f.length) return t.innerHTML=`<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; f.slice().reverse().forEach(v=>{ const cond=v.condicion||'PAGADO'; const tot=v.precioV*v.cantidad; t.innerHTML+=`<tr class="fin-row"><td class="p-4">${v.mes}</td><td class="p-4 font-medium">${v.producto}</td><td class="p-4">${v.cantidad}u</td><td class="p-4 font-bold">S/ ${tot.toFixed(2)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${cond==='PAGADO'?'badge-green':'badge-yellow'}">${cond}</span></td><td class="p-4 text-right">${cond==='PENDIENTE'?`<button onclick="liquidarCobroVenta('${v.id}')" class="badge-yellow text-xs px-2 py-1 rounded mr-2">Cobrar</button>`:''}<button class="text-red-400" onclick="deleteVenta('${v.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
-        function renderGastosTable() { const t=document.getElementById('table-gastos-body'); t.innerHTML=''; if(!finState.gastos.length) return t.innerHTML=`<tr><td colspan="4" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; finState.gastos.slice().reverse().forEach(g=>{ t.innerHTML+=`<tr class="fin-row"><td class="p-4">${g.mes}</td><td class="p-4">${g.concepto}</td><td class="p-4 font-bold text-rose-400">S/ ${g.monto.toFixed(2)}</td><td class="p-4 text-right"><button class="text-red-400" onclick="deleteGasto('${g.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
-        function renderMensualTable() { const t=document.getElementById('table-mensual-body'); t.innerHTML=''; mesesLista.forEach(m=>{ const v=finState.ventas.filter(x=>x.mes===m && (x.condicion==='PAGADO'||!x.condicion)); const g=finState.gastos.filter(x=>x.mes===m); const tv=v.reduce((a,x)=>a+(x.precioV*x.cantidad),0); const tg=g.reduce((a,x)=>a+x.monto,0); let gm=0; v.forEach(x=>{ gm+=(x.precioV*x.cantidad)-finState.compras.filter(c=>c.ventaId===x.id).reduce((a,c)=>a+c.precioC,0); }); gm-=tg; if(tv||tg){ t.innerHTML+=`<tr class="fin-row"><td class="p-4 font-medium">${m}</td><td class="p-4 text-indigo-400">S/ ${tv.toFixed(2)}</td><td class="p-4 text-rose-400">S/ ${tg.toFixed(2)}</td><td class="p-4 text-emerald-400">S/ ${gm.toFixed(2)}</td></tr>`; } }); }
-        function renderInventarioTable() { const t=document.getElementById('table-inventario-body'); t.innerHTML=''; const s=document.getElementById('search-inventario').value.toLowerCase(); const names=[...new Set(finState.compras.filter(c=>c.estado==='STOCK').map(c=>c.producto))]; if(!names.length) return t.innerHTML=`<tr><td colspan="5" class="p-4 text-center text-gray-500">Sin stock</td></tr>`; names.filter(n=>n.toLowerCase().includes(s)).forEach(n=>{ const items=finState.compras.filter(c=>c.producto===n && c.estado==='STOCK'); const st=items.length; const cu=items[0].precioC; const tt=st*cu; t.innerHTML+=`<tr class="fin-row"><td class="p-4"><img src="${items[0].img}" class="w-10 h-10 rounded-lg"></td><td class="p-4 font-medium">${n}</td><td class="p-4">${st}u</td><td class="p-4">S/ ${cu.toFixed(2)}</td><td class="p-4 font-bold">S/ ${tt.toFixed(2)}</td></tr>`; }); }
+        function updateDatalists() { const dl = document.getElementById('productos-existentes'); if(!dl) return; dl.innerHTML=''; [...new Set(finState.compras.map(c=>c.producto))].forEach(n=>{ const o=document.createElement('option'); o.value=n; dl.appendChild(o); }); const sel = document.getElementById('venta-producto'); const cur=sel.value; sel.innerHTML='<option value="">--</option>'; [...new Set(finState.compras.filter(c=>c.estado==='STOCK').map(c=>c.producto))].forEach(n=>{ const o=document.createElement('option'); o.value=n; o.innerText=n; sel.appendChild(o); }); sel.value=cur; }
+        function renderComprasTable() { const t=document.getElementById('table-compras-body'); if(!t) return; t.innerHTML=''; const s=document.getElementById('search-compras').value.toLowerCase(); let f=finState.compras; if(s) f=f.filter(c=>c.producto.toLowerCase().includes(s)); if(!f.length) return t.innerHTML=`<tr><td colspan="7" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; f.slice().reverse().forEach(c=>{ t.innerHTML+=`<tr class="fin-row"><td class="p-4 text-xs text-gray-400">${c.id.substring(0,8)}</td><td class="p-4"><img src="${c.img}" class="w-10 h-10 rounded-lg"></td><td class="p-4 font-medium">${c.producto}</td><td class="p-4">S/ ${c.precioC.toFixed(2)}</td><td class="p-4">S/ ${c.precioV.toFixed(2)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${c.estado==='STOCK'?'badge-yellow':'bg-slate-700 text-slate-400'}">${c.estado}</span></td><td class="p-4 text-right"><button class="text-red-400" onclick="deleteCompra('${c.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
+        function renderVentasTable() { const t=document.getElementById('table-ventas-body'); if(!t) return; t.innerHTML=''; const s=document.getElementById('search-ventas').value.toLowerCase(); let f=finState.ventas; if(s) f=f.filter(v=>v.producto.toLowerCase().includes(s)); if(!f.length) return t.innerHTML=`<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; f.slice().reverse().forEach(v=>{ const cond=v.condicion||'PAGADO'; const tot=v.precioV*v.cantidad; t.innerHTML+=`<tr class="fin-row"><td class="p-4">${v.mes}</td><td class="p-4 font-medium">${v.producto}</td><td class="p-4">${v.cantidad}u</td><td class="p-4 font-bold">S/ ${tot.toFixed(2)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${cond==='PAGADO'?'badge-green':'badge-yellow'}">${cond}</span></td><td class="p-4 text-right">${cond==='PENDIENTE'?`<button onclick="liquidarCobroVenta('${v.id}')" class="badge-yellow text-xs px-2 py-1 rounded mr-2">Cobrar</button>`:''}<button class="text-red-400" onclick="deleteVenta('${v.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
+        function renderGastosTable() { const t=document.getElementById('table-gastos-body'); if(!t) return; t.innerHTML=''; if(!finState.gastos.length) return t.innerHTML=`<tr><td colspan="4" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; finState.gastos.slice().reverse().forEach(g=>{ t.innerHTML+=`<tr class="fin-row"><td class="p-4">${g.mes}</td><td class="p-4">${g.concepto}</td><td class="p-4 font-bold text-rose-400">S/ ${g.monto.toFixed(2)}</td><td class="p-4 text-right"><button class="text-red-400" onclick="deleteGasto('${g.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
+        function renderMensualTable() { const t=document.getElementById('table-mensual-body'); if(!t) return; t.innerHTML=''; mesesLista.forEach(m=>{ const v=finState.ventas.filter(x=>x.mes===m && (x.condicion==='PAGADO'||!x.condicion)); const g=finState.gastos.filter(x=>x.mes===m); const tv=v.reduce((a,x)=>a+(x.precioV*x.cantidad),0); const tg=g.reduce((a,x)=>a+x.monto,0); let gm=0; v.forEach(x=>{ gm+=(x.precioV*x.cantidad)-finState.compras.filter(c=>c.ventaId===x.id).reduce((a,c)=>a+c.precioC,0); }); gm-=tg; if(tv||tg){ t.innerHTML+=`<tr class="fin-row"><td class="p-4 font-medium">${m}</td><td class="p-4 text-indigo-400">S/ ${tv.toFixed(2)}</td><td class="p-4 text-rose-400">S/ ${tg.toFixed(2)}</td><td class="p-4 text-emerald-400">S/ ${gm.toFixed(2)}</td></tr>`; } }); }
+        function renderInventarioTable() { const t=document.getElementById('table-inventario-body'); if(!t) return; t.innerHTML=''; const s=document.getElementById('search-inventario').value.toLowerCase(); const names=[...new Set(finState.compras.filter(c=>c.estado==='STOCK').map(c=>c.producto))]; if(!names.length) return t.innerHTML=`<tr><td colspan="5" class="p-4 text-center text-gray-500">Sin stock</td></tr>`; names.filter(n=>n.toLowerCase().includes(s)).forEach(n=>{ const items=finState.compras.filter(c=>c.producto===n && c.estado==='STOCK'); const st=items.length; const cu=items[0].precioC; const tt=st*cu; t.innerHTML+=`<tr class="fin-row"><td class="p-4"><img src="${items[0].img}" class="w-10 h-10 rounded-lg"></td><td class="p-4 font-medium">${n}</td><td class="p-4">${st}u</td><td class="p-4">S/ ${cu.toFixed(2)}</td><td class="p-4 font-bold">S/ ${tt.toFixed(2)}</td></tr>`; }); }
 
-        function initCharts() { Chart.defaults.color = '#94a3b8'; Chart.defaults.borderColor = 'rgba(255,255,255,0.1)'; const ctxB=document.getElementById('chartBalance'); const ctxR=document.getElementById('chartRendimiento'); if(chartBInstance) chartBInstance.destroy(); if(chartRInstance) chartRInstance.destroy(); chartBInstance=new Chart(ctxB,{type:'doughnut',data:{labels:['Capital','Mercancía','Gastos'],datasets:[{data:[finState.capital||0, finState.compras.filter(c=>c.estado==='STOCK').reduce((a,c)=>a+c.precioC,0), finState.gastos.reduce((a,g)=>a+g.monto,0)],backgroundColor:['#3b82f6','#f59e0b','#ef4444'],borderWidth:0}]}}); chartRInstance=new Chart(ctxR,{type:'line',data:{labels:mesesLista,datasets:[{label:'Ganancia',data:mesesLista.map(m=>{const v=finState.ventas.filter(x=>x.mes===m&&(x.condicion==='PAGADO'||!x.condicion));const g=finState.gastos.filter(x=>x.mes===m);let gm=0;v.forEach(x=>{gm+=(x.precioV*x.cantidad)-finState.compras.filter(c=>c.ventaId===x.id).reduce((a,c)=>a+c.precioC,0);});return gm-g.reduce((a,x)=>a+x.monto,0);}),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',fill:true,tension:0.3}]}}); }
-        function updateCharts() { if(chartBInstance && chartRInstance) initCharts(); }
+        function initCharts() { 
+            if(!document.getElementById('chartBalance')) return;
+            Chart.defaults.color = '#94a3b8'; Chart.defaults.borderColor = 'rgba(255,255,255,0.1)'; 
+            if(chartBInstance) chartBInstance.destroy(); if(chartRInstance) chartRInstance.destroy(); 
+            chartBInstance=new Chart(document.getElementById('chartBalance'),{type:'doughnut',data:{labels:['Capital','Mercancía','Gastos'],datasets:[{data:[finState.capital||0, finState.compras.filter(c=>c.estado==='STOCK').reduce((a,c)=>a+c.precioC,0), finState.gastos.reduce((a,g)=>a+g.monto,0)],backgroundColor:['#3b82f6','#f59e0b','#ef4444'],borderWidth:0}]}}); 
+            chartRInstance=new Chart(document.getElementById('chartRendimiento'),{type:'line',data:{labels:mesesLista,datasets:[{label:'Ganancia',data:mesesLista.map(m=>{const v=finState.ventas.filter(x=>x.mes===m&&(x.condicion==='PAGADO'||!x.condicion));const g=finState.gastos.filter(x=>x.mes===m);let gm=0;v.forEach(x=>{gm+=(x.precioV*x.cantidad)-finState.compras.filter(c=>c.ventaId===x.id).reduce((a,c)=>a+c.precioC,0);});return gm-g.reduce((a,x)=>a+x.monto,0);}),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',fill:true,tension:0.3}]}}); 
+        }
+        function updateCharts() { initCharts(); }
 
-        // Init
         document.getElementById('admin-pass').addEventListener('keypress', function(e) { if (e.key === 'Enter') window.checkAuth(); });
         window.renderCart();
     </script>
