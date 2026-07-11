@@ -436,7 +436,21 @@
         const mesesLista = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         let chartBInstance = null; let chartRInstance = null;
 
-        async function saveFinances() { await setDoc(finRef, finState); updateAllDOM(); updateCharts(); }
+        async function saveFinances() {
+    // Creamos una copia limpia para no dañar tu objeto original
+    const stateToSave = JSON.parse(JSON.stringify(finState));
+    // Firebase no permite arrays dentro de arrays. Convertimos esto a texto.
+    if (stateToSave.ventas) {
+        stateToSave.ventas.forEach(v => {
+            if (Array.isArray(v.comprasAsociadasIds)) {
+                v.comprasAsociadasIds = v.comprasAsociadasIds.join(',');
+            }
+        });
+    }
+    await setDoc(finRef, stateToSave);
+    updateAllDOM();
+    updateCharts();
+}
         
         window.exportarDatosUSB = function() { const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(finState, null, 2)); const a = document.createElement('a'); a.href=d; a.download="asteroide_balance.json"; a.click(); }
         window.importarDatosUSB = function(e) { 
