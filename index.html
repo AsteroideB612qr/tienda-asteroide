@@ -373,8 +373,13 @@
         const finRef = doc(db, "data", "finances");
         onSnapshot(finRef, (snap) => {
             if (snap.exists()) {
-                finState = snap.data();
-                updateAllDOM();
+                const data = snap.data();
+                if (data.json) {
+                    try {
+                        finState = JSON.parse(data.json);
+                        updateAllDOM();
+                    } catch(e) { console.error("Error leyendo finanzas", e); }
+                }
             }
         });
 
@@ -436,15 +441,12 @@
         const mesesLista = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         let chartBInstance = null; let chartRInstance = null;
 
-        async function saveFinances() {
-    // Creamos una copia limpia para no dañar tu objeto original
-    const stateToSave = JSON.parse(JSON.stringify(finState));
-    // Firebase no permite arrays dentro de arrays. Convertimos esto a texto.
-    if (stateToSave.ventas) {
-        stateToSave.ventas.forEach(v => {
-            if (Array.isArray(v.comprasAsociadasIds)) {
-                v.comprasAsociadasIds = v.comprasAsociadasIds.join(',');
-            }
+async function saveFinances() {
+    // Guardamos todo el estado como un texto (string) para evitar cualquier error de Firebase con listas o imágenes
+    await setDoc(finRef, { json: JSON.stringify(finState) });
+    updateAllDOM();
+    updateCharts();
+}
         });
     }
     await setDoc(finRef, stateToSave);
