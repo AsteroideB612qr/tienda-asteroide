@@ -10,7 +10,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
     <style>
         :root { --space-dark: #0B0E14; --asteroid-brown: #8B5E3C; --rocket-red: #E63946; --cosmic-cyan: #4CC9F0; --star-white: #F8F9FA; --whatsapp-green: #25D366; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--space-dark); color: var(--star-white); overflow-x: hidden; }
@@ -36,7 +35,6 @@
         .cart-overlay.open { opacity: 1; pointer-events: auto; }
         .auth-modal { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; }
         .auth-modal.open { display: flex; }
-        .grab-handle { cursor: grab; } .grab-handle:active { cursor: grabbing; } .sortable-ghost { opacity: 0.3; background: rgba(76, 201, 240, 0.2); }
         .tab-btn.active { background-color: var(--rocket-red); color: white; box-shadow: 0 4px 14px rgba(230, 57, 70, 0.3); }
         .fin-table-head { background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
         .fin-row { border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -166,12 +164,40 @@
             <div id="ftab-resumen" class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Capital Inicial</p><h3 id="card-capital" class="text-2xl font-bold mt-1 text-blue-400">S/ 0.00</h3></div><i class="fa-solid fa-building-columns text-blue-500 text-xl"></i></div>
-                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Liquidez (Caja)</p><h3 id="card-liquidez" class="text-2xl font-bold mt-1 text-emerald-400">S/ 0.00</h3></div><i class="fa-solid fa-scale-balanced text-emerald-500 text-xl"></i></div>
-                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Mercancía en Stock</p><h3 id="card-mercancia" class="text-2xl font-bold mt-1 text-amber-400">S/ 0.00</h3></div><i class="fa-solid fa-box text-amber-500 text-xl"></i></div>
+                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Liquidez (Caja Real)</p><h3 id="card-liquidez" class="text-2xl font-bold mt-1 text-emerald-400">S/ 0.00</h3></div><i class="fa-solid fa-scale-balanced text-emerald-500 text-xl"></i></div>
+                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Mercancía Física</p><h3 id="card-mercancia" class="text-2xl font-bold mt-1 text-amber-400">S/ 0.00</h3></div><i class="fa-solid fa-box text-amber-500 text-xl"></i></div>
                     <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Ventas Cobradas</p><h3 id="card-total-vendido" class="text-2xl font-bold mt-1 text-indigo-400">S/ 0.00</h3></div><i class="fa-solid fa-cart-shopping text-indigo-500 text-xl"></i></div>
                     <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Gastos Operativos</p><h3 id="card-total-egresos" class="text-2xl font-bold mt-1 text-rose-400">S/ 0.00</h3></div><i class="fa-solid fa-arrow-trend-down text-rose-500 text-xl"></i></div>
-                    <div class="glass p-5 rounded-2xl flex items-center justify-between border-l-4 border-red-500"><div><p class="text-xs text-gray-400 uppercase">Ganancia Neta</p><h3 id="card-ganancia" class="text-2xl font-bold mt-1 text-white">S/ 0.00</h3></div><i class="fa-solid fa-dollar-sign text-red-500 text-xl"></i></div>
+                    <div class="glass p-5 rounded-2xl flex items-center justify-between border-l-4 border-red-500"><div><p class="text-xs text-gray-400 uppercase">Ganancia Neta Realizada</p><h3 id="card-ganancia" class="text-2xl font-bold mt-1 text-white">S/ 0.00</h3></div><i class="fa-solid fa-dollar-sign text-red-500 text-xl"></i></div>
                 </div>
+                
+                <!-- PANEL DE VALORES FLOTANTES -->
+                <div class="glass p-6 rounded-2xl">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 bg-amber-100/10 text-amber-400 rounded-xl"><i class="fa-solid fa-hourglass-half"></i></div>
+                            <div>
+                                <h4 class="text-sm font-bold tracking-wide text-amber-400">Valores Flotantes (Pendientes de Pago)</h4>
+                                <p class="text-xs text-gray-500">Métricas de transacciones bajo condición de pago pendiente</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-black/20 p-4 rounded-xl border border-white/5">
+                            <p class="text-xs font-medium text-gray-400">Monto Pendiente de Cobro</p>
+                            <h5 id="float-por-cobrar" class="text-xl font-bold mt-1 text-amber-400">S/ 0.00</h5>
+                        </div>
+                        <div class="bg-black/20 p-4 rounded-xl border border-white/5">
+                            <p class="text-xs font-medium text-gray-400">Liquidez Flotante (Costos)</p>
+                            <h5 id="float-liquidez" class="text-xl font-bold mt-1 text-blue-400">S/ 0.00</h5>
+                        </div>
+                        <div class="bg-black/20 p-4 rounded-xl border border-white/5">
+                            <p class="text-xs font-medium text-gray-400">Ganancia Flotante Estimada</p>
+                            <h5 id="float-ganancia" class="text-xl font-bold mt-1 text-emerald-400">S/ 0.00</h5>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="glass p-6 rounded-2xl"><h4 class="text-sm font-semibold mb-4">Estructura Financiera</h4><div class="h-64 relative"><canvas id="chartBalance"></canvas></div></div>
                     <div class="glass p-6 rounded-2xl"><h4 class="text-sm font-semibold mb-4">Evolución de Rendimiento</h4><div class="h-64 relative"><canvas id="chartRendimiento"></canvas></div></div>
@@ -199,15 +225,14 @@
                         <div><label class="text-xs text-gray-400 mb-1 block">Categoría</label><input type="text" id="compra-categoria" required class="fin-input" placeholder="Ej: Audio"></div>
                         <div class="lg:col-span-2"><label class="text-xs text-gray-400 mb-1 block">Descripción</label><input type="text" id="compra-descripcion" required class="fin-input" placeholder="Breve detalle"></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">P. Venta (Tienda)</label><input type="number" id="compra-precio-v" step="0.01" required class="fin-input"></div>
-                        <div><label class="text-xs text-gray-400 mb-1 block">P. Compra (Costo Lote)</label><input type="number" id="compra-precio-c" step="0.01" class="fin-input" placeholder="Obligatorio si es nuevo"></div>
-                        <div><label class="text-xs text-gray-400 mb-1 block">Cantidad (Stock Lote)</label><input type="number" id="compra-cantidad" min="0" class="fin-input" placeholder="Obligatorio si es nuevo"></div>
+                        <div><label class="text-xs text-gray-400 mb-1 block">P. Compra (Por Item)</label><input type="number" id="compra-precio-c" step="0.01" class="fin-input" placeholder="Obligatorio si es nuevo"></div>
+                        <div><label class="text-xs text-gray-400 mb-1 block">Cantidad (Unidades)</label><input type="number" id="compra-cantidad" min="0" class="fin-input" placeholder="Obligatorio si es nuevo"></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">Foto</label><input type="file" id="compra-img-file" accept="image/*" class="fin-input text-xs pt-2"></div>
                         <div class="lg:col-span-4 flex justify-end gap-2">
                             <button type="button" onclick="window.resetCompraForm()" class="glass text-white px-4 py-2 rounded-xl text-sm">Cancelar</button>
                             <button type="submit" class="btn-cyan text-white px-6 py-2 rounded-xl text-sm font-bold">Guardar Producto</button>
                         </div>
                     </form>
-                    <p class="text-xs text-gray-500 mt-4">Nota: Si editas un producto existente y le pones un nuevo P. Compra y Cantidad, se agregará como un nuevo lote. Si los dejas vacíos, solo se actualiza la info general.</p>
                 </div>
                 <div class="glass rounded-2xl overflow-hidden">
                     <div class="p-4 flex justify-between items-center">
@@ -228,7 +253,7 @@
                         <div><label class="text-xs text-gray-400 mb-1 block">P. Real (u)</label><input type="number" id="venta-precio" step="0.01" required class="fin-input"></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">Mes</label><select id="venta-mes" class="fin-input"><option>Enero</option><option>Febrero</option><option>Marzo</option><option>Abril</option><option>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option><option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option></select></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">Condición</label><select id="venta-condicion" class="fin-input"><option value="PAGADO">Pagado</option><option value="PENDIENTE">Pendiente</option></select></div>
-                        <div class="lg:col-span-5 flex justify-between items-center"><p class="text-xs text-gray-400">Costo Total Lotes: <span id="venta-p-compra-auto" class="font-bold text-white">S/ 0.00</span></p><button type="submit" class="btn-cyan text-white px-6 py-2.5 rounded-xl">Registrar</button></div>
+                        <div class="lg:col-span-5 flex justify-between items-center"><p class="text-xs text-gray-400">Costo Total Items: <span id="venta-p-compra-auto" class="font-bold text-white">S/ 0.00</span></p><button type="submit" class="btn-cyan text-white px-6 py-2.5 rounded-xl">Registrar</button></div>
                     </form>
                 </div>
                 <div class="glass rounded-2xl overflow-hidden">
@@ -325,7 +350,7 @@
             });
         }
 
-        // === FUNCIONES MATEMÁTICAS BLINDADAS (ANTI-NaN) ===
+        // Funciones Matemáticas Seguras
         const safeNum = (val) => { const n = Number(val); return isNaN(n) ? 0 : n; };
         const getRevenue = (v) => safeNum(v.precioV) * safeNum(v.cantidad);
         const getCostoTotal = (v) => {
@@ -358,7 +383,22 @@
             products = [];
             snapshot.forEach((d) => {
                 const data = d.data();
-                if (!data.lots) data.lots = [{ id: 'L-old', cost: safeNum(data.cost), qty: safeNum(data.stock) }];
+                // Migración a units individuales
+                if (!data.units) {
+                    let unitsArr = [];
+                    if (data.lots) {
+                        data.lots.forEach(l => {
+                            for(let i=0; i<safeNum(l.qty); i++) {
+                                unitsArr.push({ id: 'U-' + Date.now() + Math.floor(Math.random()*1000000), cost: safeNum(l.cost) });
+                            }
+                        });
+                    } else if (data.stock) {
+                        for(let i=0; i<safeNum(data.stock); i++) {
+                            unitsArr.push({ id: 'U-' + Date.now() + Math.floor(Math.random()*1000000), cost: safeNum(data.cost) });
+                        }
+                    }
+                    data.units = unitsArr;
+                }
                 products.push({ id: d.id, ...data });
             });
             products.sort((a, b) => (a.order || 999999) - (b.order || 999999));
@@ -393,7 +433,7 @@
             const searchInput = document.getElementById('store-search');
             const queryStr = searchInput ? searchInput.value.toLowerCase().trim() : '';
             
-            let availableProducts = products.filter(p => p.lots.reduce((a, l) => a + safeNum(l.qty), 0) > 0);
+            let availableProducts = products.filter(p => p.units.length > 0);
             
             if (queryStr) {
                 availableProducts = availableProducts.filter(p => 
@@ -457,7 +497,7 @@
         }
 
         window.exportarDatosUSB = function() { 
-            const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({capital: finState.capital, ventas: finState.ventas, gastos: finState.gastos, inventario: products}, null, 2)); 
+            const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({capital: finState.capital, ventas: finState.ventas, gastos: finState.gastos, inventario: products.map(p => ({...p, units: p.units}))}, null, 2)); 
             const a = document.createElement('a'); a.href=d; a.download="asteroide_backup.json"; a.click(); 
         }
         
@@ -477,23 +517,36 @@
                         const batch = writeBatch(db);
                         parsed.inventario.forEach(p => {
                             const newRef = doc(collection(db, "products"));
-                            if (!p.lots) p.lots = [{ id: 'L-old', cost: safeNum(p.cost), qty: safeNum(p.stock) }];
-                            batch.set(newRef, { name: p.name, category: p.category || 'General', desc: p.desc || '', price: p.price || 0, img: p.img, lots: p.lots, order: p.order || 0 });
+                            if (!p.units) {
+                                let unitsArr = [];
+                                if (p.lots) {
+                                    p.lots.forEach(l => {
+                                        for(let i=0; i<safeNum(l.qty); i++) {
+                                            unitsArr.push({ id: 'U-' + Date.now() + Math.floor(Math.random()*1000000), cost: safeNum(l.cost) });
+                                        }
+                                    });
+                                } else if (p.stock) {
+                                    for(let i=0; i<safeNum(p.stock); i++) {
+                                        unitsArr.push({ id: 'U-' + Date.now() + Math.floor(Math.random()*1000000), cost: safeNum(p.cost) });
+                                    }
+                                }
+                                p.units = unitsArr;
+                            }
+                            batch.set(newRef, { name: p.name, category: p.category || 'General', desc: p.desc || '', price: p.price || 0, img: p.img, units: p.units, order: p.order || 0 });
                         });
                         await batch.commit();
                     } else if (parsed.compras && parsed.compras.length > 0) {
                         const grouped = {};
                         parsed.compras.forEach(c => {
-                            if(!grouped[c.producto]) grouped[c.producto] = { name: c.producto, category: 'General', desc: 'Migrado', price: c.precioV, img: c.img, lots: {} };
-                            const lotKey = c.precioC.toString();
-                            if(!grouped[c.producto].lots[lotKey]) grouped[c.producto].lots[lotKey] = { cost: c.precioC, qty: 0 };
-                            if(c.estado === 'STOCK') grouped[c.producto].lots[lotKey].qty++;
+                            if(!grouped[c.producto]) grouped[c.producto] = { name: c.producto, category: 'General', desc: 'Migrado', price: c.precioV, img: c.img, units: [] };
+                            if(c.estado === 'STOCK') {
+                                grouped[c.producto].units.push({ id: 'U-' + Date.now() + Math.floor(Math.random()*1000000), cost: safeNum(c.precioC) });
+                            }
                         });
                         const batch = writeBatch(db);
                         Object.keys(grouped).forEach(name => {
                             const newRef = doc(collection(db, "products"));
-                            const lotsArray = Object.values(grouped[name].lots).map(l => ({ id: 'L-' + Date.now() + Math.random(), cost: l.cost, qty: l.qty }));
-                            batch.set(newRef, { ...grouped[name], lots: lotsArray });
+                            batch.set(newRef, grouped[name]);
                         });
                         await batch.commit();
                     }
@@ -538,24 +591,29 @@
                 
                 if (id) {
                     const existing = products.find(p => p.id === id);
-                    let lots = existing.lots || [];
+                    let units = existing.units || [];
                     if (img === '') img = existing.img; 
                     
                     if (qtyVal && costVal) {
                         const cost = parseFloat(costVal);
                         const qty = parseInt(qtyVal);
                         if (qty > 0) {
-                            lots.push({ id: 'L-' + Date.now() + Math.floor(Math.random()*1000), cost: cost, qty: qty });
+                            for(let i=0; i<qty; i++) {
+                                units.push({ id: 'U-' + Date.now() + Math.floor(Math.random()*1000000), cost: cost });
+                            }
                         }
                     }
-                    await updateDoc(doc(db, "products", id), { name, category, desc, price, img, lots });
+                    await updateDoc(doc(db, "products", id), { name, category, desc, price, img, units });
                 } else {
                     if (!qtyVal || !costVal) { alert("Para un producto nuevo, ingresa Costo y Cantidad."); submitBtn.innerHTML = 'Guardar Producto'; submitBtn.disabled = false; return; }
                     if (!img) { img = 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=100&q=80'; }
                     const cost = parseFloat(costVal);
                     const qty = parseInt(qtyVal);
-                    const lots = [{ id: 'L-' + Date.now() + Math.floor(Math.random()*1000), cost: cost, qty: qty }];
-                    await addDoc(collection(db, "products"), { name, category, desc, price, img, lots, order: products.length });
+                    let units = [];
+                    for(let i=0; i<qty; i++) {
+                        units.push({ id: 'U-' + Date.now() + Math.floor(Math.random()*1000000), cost: cost });
+                    }
+                    await addDoc(collection(db, "products"), { name, category, desc, price, img, units, order: products.length });
                 }
                 window.resetCompraForm();
             } catch(err) { alert("Error: " + err.message); }
@@ -580,11 +638,24 @@
             document.getElementById('form-compra-title').innerText = "Ingresar / Editar Producto";
         }
 
+        window.editUnit = async function(prodId, unitId) {
+            const p = products.find(p => p.id === prodId);
+            if(!p) return;
+            const u = p.units.find(x => x.id === unitId);
+            if(!u) return;
+            const newCost = prompt("Editar costo individual del item:", u.cost);
+            if (newCost !== null && !isNaN(parseFloat(newCost))) {
+                u.cost = parseFloat(newCost);
+                await updateDoc(doc(db, "products", prodId), { units: p.units });
+                window.renderComprasTable(); // re-render to show new cost
+                updateAllDOM();
+            }
+        }
+
         window.handleVentaProductChange = function() { 
             const p = products.find(x => x.id === document.getElementById('venta-producto').value); 
             if(!p) return; 
-            const stock = p.lots.reduce((a, l) => a + safeNum(l.qty), 0);
-            document.getElementById('venta-stock-disp').innerText = stock; 
+            document.getElementById('venta-stock-disp').innerText = p.units.length; 
             document.getElementById('venta-precio').value = p.price || 0; 
             window.calcVentaPreview();
         }
@@ -593,16 +664,11 @@
             if(!p) return;
             const c = parseInt(document.getElementById('venta-cantidad').value) || 0;
             if (c <= 0) { document.getElementById('venta-p-compra-auto').innerText = `S/ 0.00`; return; }
-            let remaining = c;
+            if (c > p.units.length) { document.getElementById('venta-p-compra-auto').innerText = "Stock insuficiente"; return; }
             let costoTotal = 0;
-            const lots = p.lots.map(l => ({...l, qty: safeNum(l.qty), cost: safeNum(l.cost)})).sort((a,b) => String(a.id).localeCompare(String(b.id)));
-            for (let lot of lots) {
-                if (remaining <= 0) break;
-                const take = Math.min(lot.qty, remaining);
-                costoTotal += take * lot.cost;
-                remaining -= take;
+            for (let i = 0; i < c; i++) {
+                costoTotal += safeNum(p.units[i].cost);
             }
-            if (remaining > 0) { document.getElementById('venta-p-compra-auto').innerText = "Stock insuficiente"; return; }
             document.getElementById('venta-p-compra-auto').innerText = `S/ ${costoTotal.toFixed(2)}`;
         }
 
@@ -611,25 +677,19 @@
             const p = products.find(x => x.id === document.getElementById('venta-producto').value); 
             if(!p) return alert('Selecciona producto'); 
             const c = parseInt(document.getElementById('venta-cantidad').value); 
-            const totalStock = p.lots.reduce((a, l) => a + safeNum(l.qty), 0);
-            if(c > totalStock) return alert('Stock insuficiente.'); 
+            if(c > p.units.length) return alert('Stock insuficiente.'); 
             
             const pv = parseFloat(document.getElementById('venta-precio').value); 
             const m = document.getElementById('venta-mes').value; 
             const cond = document.getElementById('venta-condicion').value; 
 
-            let remaining = c;
             let costoTotal = 0;
-            const updatedLots = p.lots.map(l => ({ id: l.id, cost: safeNum(l.cost), qty: safeNum(l.qty) })).sort((a, b) => String(a.id).localeCompare(String(b.id)));
-            for (let lot of updatedLots) {
-                if (remaining <= 0) break;
-                const take = Math.min(lot.qty, remaining);
-                costoTotal += take * lot.cost;
-                lot.qty -= take;
-                remaining -= take;
+            const updatedUnits = [...p.units];
+            for (let i = 0; i < c; i++) {
+                const u = updatedUnits.shift(); // Remove oldest
+                costoTotal += safeNum(u.cost);
             }
-            const cleanLots = updatedLots.filter(l => l.qty > 0);
-            await updateDoc(doc(db, "products", p.id), { lots: cleanLots });
+            await updateDoc(doc(db, "products", p.id), { units: updatedUnits });
             
             finState.ventas.push({ id: 'V-'+Date.now(), producto: p.name, cantidad: c, precioV: pv, costoTotal: costoTotal, mes: m, condicion: cond }); 
             document.getElementById('form-venta').reset(); 
@@ -646,7 +706,7 @@
             if(!elLiq) return; 
             
             const cap = safeNum(finState.capital); 
-            const stock = products.reduce((a, p) => a + (p.lots || []).reduce((b, l) => b + (safeNum(l.cost) * safeNum(l.qty)), 0), 0);
+            const stock = products.reduce((a, p) => a + (p.units || []).reduce((b, u) => b + safeNum(u.cost), 0), 0);
             const vPag = finState.ventas.filter(v => v.condicion === 'PAGADO' || !v.condicion); 
             const vPend = finState.ventas.filter(v => v.condicion === 'PENDIENTE');
             
@@ -656,6 +716,7 @@
             
             const mPend = vPend.reduce((a, v) => a + getRevenue(v), 0); 
             const cPend = vPend.reduce((a, v) => a + getCostoTotal(v), 0);
+            const gPend = vPend.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0);
             
             const liq = cap - stock - cPend;
 
@@ -668,6 +729,13 @@
             document.getElementById('card-total-egresos').innerText = `S/ ${tGto.toFixed(2)}`;
             document.getElementById('card-ganancia').innerText = `S/ ${gReal.toFixed(2)}`;
 
+            const elFPC = document.getElementById('float-por-cobrar');
+            if(elFPC) elFPC.innerText = `S/ ${mPend.toFixed(2)}`;
+            const elFL = document.getElementById('float-liquidez');
+            if(elFL) elFL.innerText = `S/ ${cPend.toFixed(2)}`;
+            const elFG = document.getElementById('float-ganancia');
+            if(elFG) elFG.innerText = `S/ ${gPend.toFixed(2)}`;
+
             window.renderComprasTable(); window.renderVentasTable(); window.renderGastosTable(); window.renderMensualTable(); updateDatalists();
         }
 
@@ -675,15 +743,14 @@
             const sel = document.getElementById('venta-producto'); const cur=sel.value; 
             sel.innerHTML='<option value="">--</option>'; 
             products.forEach(p => { 
-                const stock = p.lots.reduce((a, l) => a + safeNum(l.qty), 0);
-                if (stock > 0) {
-                    const o=document.createElement('option'); o.value=p.id; o.innerText=`${p.name} (Stock: ${stock})`; sel.appendChild(o); 
+                if (p.units.length > 0) {
+                    const o=document.createElement('option'); o.value=p.id; o.innerText=`${p.name} (Stock: ${p.units.length})`; sel.appendChild(o); 
                 }
             }); 
             sel.value=cur; 
         }
         
-        window.toggleLots = function(id) {
+        window.toggleUnits = function(id) {
             expandedProductId = expandedProductId === id ? null : id;
             window.renderComprasTable();
         }
@@ -696,15 +763,14 @@
             if(!f.length) return t.innerHTML=`<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; 
             
             f.forEach(p => { 
-                const totalStock = p.lots.reduce((a, l) => a + safeNum(l.qty), 0);
                 t.innerHTML += `<tr class="fin-row">
                     <td class="p-4"><img src="${p.img}" class="w-10 h-10 rounded-lg"></td>
                     <td class="p-4 font-medium">${p.name}</td>
                     <td class="p-4"><span class="badge-green px-2 py-1 rounded-full text-xs">${p.category||''}</span></td>
-                    <td class="p-4 font-bold">${totalStock}u</td>
+                    <td class="p-4 font-bold">${p.units.length}u</td>
                     <td class="p-4">S/ ${safeNum(p.price).toFixed(2)}</td>
                     <td class="p-4 text-right whitespace-nowrap">
-                        <button class="text-cyan-400 mr-2" onclick="window.toggleLots('${p.id}')"><i class="fas fa-chevron-down"></i></button>
+                        <button class="text-cyan-400 mr-2" onclick="window.toggleUnits('${p.id}')"><i class="fas fa-chevron-down"></i></button>
                         <button class="text-emerald-400 mr-2" onclick="window.editCompra('${p.id}')"><i class="fas fa-edit"></i></button>
                         <button class="text-red-400" onclick="window.deleteCompra('${p.id}')"><i class="fas fa-trash"></i></button>
                     </td>
@@ -713,13 +779,14 @@
                 if (expandedProductId === p.id) {
                     t.innerHTML += `<tr class="bg-black/20">
                         <td colspan="6" class="p-4">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                ${p.lots.map(l => `
-                                    <div class="bg-white/5 p-3 rounded-lg border border-white/10">
-                                        <p class="text-xs text-gray-400">Lote ID: ${String(l.id).substring(0,10)}</p>
-                                        <p class="text-lg font-bold">${safeNum(l.qty)} unidades</p>
-                                        <p class="text-sm">Costo Unitario: S/ ${safeNum(l.cost).toFixed(2)}</p>
-                                        <p class="text-sm font-bold text-cyan-400">Valor Lote: S/ ${(safeNum(l.cost) * safeNum(l.qty)).toFixed(2)}</p>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                ${p.units.map(u => `
+                                    <div class="bg-white/5 p-3 rounded-lg border border-white/10 flex items-center justify-between">
+                                        <div>
+                                            <p class="text-xs text-gray-400">ID: ${String(u.id).substring(0,12)}</p>
+                                            <p class="text-sm font-bold text-cyan-400">Costo: S/ ${safeNum(u.cost).toFixed(2)}</p>
+                                        </div>
+                                        <button class="text-yellow-400" onclick="window.editUnit('${p.id}','${u.id}')"><i class="fas fa-edit"></i></button>
                                     </div>
                                 `).join('')}
                             </div>
@@ -761,7 +828,7 @@
             if(chartRInstance) chartRInstance.destroy(); 
 
             const cap = safeNum(finState.capital); 
-            const stock = products.reduce((a, p) => a + (p.lots || []).reduce((b, l) => b + (safeNum(l.cost) * safeNum(l.qty)), 0), 0);
+            const stock = products.reduce((a, p) => a + (p.units || []).reduce((b, u) => b + safeNum(u.cost), 0), 0);
             const vPag = finState.ventas.filter(v => v.condicion === 'PAGADO' || !v.condicion); 
             const tGto = finState.gastos.reduce((a, g) => a + safeNum(g.monto), 0);
             const gReal = vPag.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0) - tGto;
