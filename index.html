@@ -350,6 +350,7 @@
             });
         }
 
+        // === FUNCIONES MATEMÁTICAS BLINDADAS (ANTI-NaN) ===
         const safeNum = (val) => { const n = Number(val); return isNaN(n) ? 0 : n; };
         const getRevenue = (v) => safeNum(v.precioV) * safeNum(v.cantidad);
         const getCostoTotal = (v) => {
@@ -376,6 +377,7 @@
 
         onAuthStateChanged(auth, (user) => { isAdmin = user ? true : false; });
 
+        // Listeners Firebase
         const q = query(collection(db, "products"));
         onSnapshot(q, (snapshot) => {
             products = [];
@@ -424,6 +426,7 @@
             }
         });
 
+        // --- TIENDA ---
         window.renderStore = function() { 
             const c = document.getElementById('categories-container'); 
             const searchInput = document.getElementById('store-search');
@@ -451,15 +454,20 @@
             }); 
         }
 
+        // --- SUSCRIPTORES ---
         window.saveSubscriber = async function(e) { e.preventDefault(); await addDoc(collection(db, "subscribers"), { contact: document.getElementById('subscriber-input').value, date: new Date().toLocaleString() }); alert("¡Gracias por unirte! 🚀"); document.getElementById('subscriber-input').value=''; }
         window.renderSubscribers = function() { const t = document.getElementById('admin-subscribers-list'); t.innerHTML = subscribers.length ? subscribers.map(s=>`<tr class="fin-row"><td class="p-3">${s.contact}</td><td class="p-3 text-gray-400">${s.date||''}</td></tr>`).join('') : `<tr><td colspan="2" class="p-4 text-center text-gray-500">Sin datos</td></tr>`; }
         window.exportSubscribers = function() { if(!subscribers.length) return alert("Sin datos"); let csv="Contacto,Fecha\n"; subscribers.forEach(s=>csv+=`"${s.contact}","${s.date||''}"\n`); let link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download='suscriptores.csv'; link.click(); }
 
+        // --- CARRITO ---
         window.addToCart = function(id) { const p = products.find(p=>p.id===id); if(!p) return; let item = cart.find(i=>i.id===id); if(item) item.qty++; else cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1}); localStorage.setItem('b612_cart', JSON.stringify(cart)); window.renderCart(); }
         window.renderCart = function() { const c = document.getElementById('cart-items'); let total=0, items=0; c.innerHTML = cart.length ? cart.map(i=>{ total+=safeNum(i.price)*safeNum(i.qty); items+=safeNum(i.qty); return `<div class="flex gap-4 items-center bg-white/5 p-3 rounded-xl"><img src="${i.img}" class="w-16 h-16 object-cover rounded-lg"><div><h5 class="font-bold text-sm">${i.name}</h5><p class="text-cyan-300 text-sm">S/ ${safeNum(i.price).toFixed(2)}</p></div><div class="ml-auto text-right"><span class="font-bold">S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}</span></div></div>`; }).join('') : `<p class="text-center text-gray-500 mt-10">Vacío</p>`; document.getElementById('cart-count').innerText=items; document.getElementById('cart-total').innerText=`S/ ${total.toFixed(2)}`; }
         window.toggleCart = function() { document.getElementById('cart-drawer').classList.toggle('open'); document.getElementById('cart-overlay').classList.toggle('open'); }
         window.checkoutWhatsApp = function() { if(!cart.length) return alert("Vacío"); let m="¡Hola Asteroide B612! 🚀 Quiero:%0A%0A"; let t=0; cart.forEach(i=>{m+=`*${i.qty}x ${i.name}* S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}%0A`; t+=safeNum(i.price)*safeNum(i.qty);}); m+=`%0A*Total: S/ ${t.toFixed(2)}*`; window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${m}`, '_blank'); }
 
+        // ==========================================
+        // LÓGICA DEL DASHBOARD FINANCIERO UNIFICADO
+        // ==========================================
         const mesesLista = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         let chartBInstance = null; let chartRInstance = null;
 
@@ -542,10 +550,16 @@
                         await batch.commit();
                     }
 
+                    // MIGRACIÓN INTELIGENTE DE VENTAS: Busca el costo real en el JSON viejo si falta
                     if (parsed.ventas) {
                         parsed.ventas.forEach(v => {
-                            if(v.costoTotal === undefined || v.costoTotal === null) {
-                                v.costoTotal = safeNum(v.precioC) * safeNum(v.cantidad);
+                            if (v.costoTotal === undefined || v.costoTotal === null || isNaN(Number(v.costoTotal)) || Number(v.costoTotal) === 0) {
+                                if (parsed.compras && parsed.compras.length > 0) {
+                                    // Busca los items asociados a esta venta en el formato viejo
+                                    v.costoTotal = parsed.compras.filter(c => c.ventaId === v.id).reduce((acc, c) => acc + safeNum(c.precioC), 0);
+                                } else {
+                                    v.costoTotal = safeNum(v.precioC) * safeNum(v.cantidad);
+                                }
                             }
                         });
                     }
@@ -677,7 +691,7 @@
             let costoTotal = 0;
             const updatedUnits = [...p.units];
             for (let i = 0; i < c; i++) {
-                const u = updatedUnits.shift();
+                const u = updatedUnits.shift(); // Remove oldest
                 costoTotal += safeNum(u.cost);
             }
             await updateDoc(doc(db, "products", p.id), { units: updatedUnits });
@@ -703,12 +717,18 @@
             
             const tVen = vPag.reduce((a, v) => a + getRevenue(v), 0); 
             const tGto = finState.gastos.reduce((a, g) => a + safeNum(g.monto), 0);
-            const gReal = vPag.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0) - tGto;
+            
+            // 1. Sumatoria de diferencias de TODOS los productos vendidos
+            const grossProfitAll = finState.ventas.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0);
+            // 2. Ganancia Flotante (Sumatoria de diferencias de pendientes)
+            const gPend = vPend.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0);
+            // 3. Ganancia Neta Realizada = GrossProfitAll - Ganancia Flotante - Gastos
+            const gReal = grossProfitAll - gPend - tGto;
             
             const mPend = vPend.reduce((a, v) => a + getRevenue(v), 0); 
-            const cPend = vPend.reduce((a, v) => a + getCostoTotal(v), 0);
-            const gPend = vPend.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0);
+            const cPend = vPend.reduce((a, v) => a + getCostoTotal(v), 0); // Liquidez Flotante
             
+            // Caja Real = Capital - Mercancía - Liquidez Flotante
             const liq = cap - stock - cPend;
 
             elLiq.innerText = liq.toFixed(2);
@@ -822,8 +842,12 @@
             const stock = products.reduce((a, p) => a + (p.units || []).reduce((b, u) => b + safeNum(u.cost), 0), 0);
             const vPag = finState.ventas.filter(v => v.condicion === 'PAGADO' || !v.condicion); 
             const tGto = finState.gastos.reduce((a, g) => a + safeNum(g.monto), 0);
-            const gReal = vPag.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0) - tGto;
+            
+            const grossProfitAll = finState.ventas.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0);
             const vPend = finState.ventas.filter(v => v.condicion === 'PENDIENTE');
+            const gPend = vPend.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0);
+            const gReal = grossProfitAll - gPend - tGto;
+            
             const cPend = vPend.reduce((a, v) => a + getCostoTotal(v), 0);
             const liq = cap - stock - cPend;
 
