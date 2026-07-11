@@ -96,7 +96,6 @@
                 <span class="text-cyan-400 text-sm font-bold tracking-widest">CATÁLOGO ACTUAL</span>
                 <h3 class="text-4xl md:text-5xl font-black mt-2">Gadgets del Universo</h3>
             </div>
-            <!-- BARRA DE BÚSQUEDA DE LA TIENDA -->
             <div class="max-w-xl mx-auto mb-10">
                 <input type="text" id="store-search" oninput="window.renderStore()" placeholder="Buscar gadgets en el universo..." class="w-full px-6 py-3 rounded-full bg-white/10 border border-white/20 focus:outline-none focus:border-cyan-400 text-white text-center">
             </div>
@@ -144,8 +143,8 @@
         <div id="admin-finanzas-view">
             <div class="glass rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-2 flex-wrap">
-                    <button onclick="exportarDatosUSB()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs flex items-center gap-2"><i class="fa-solid fa-download text-cyan-400"></i> Descargar Datos</button>
-                    <label class="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-upload text-emerald-400"></i> Migrar .json USB<input type="file" id="importar-archivo-usb" accept=".json" onchange="importarDatosUSB(event)" class="hidden"></label>
+                    <button onclick="window.exportarDatosUSB()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs flex items-center gap-2"><i class="fa-solid fa-download text-cyan-400"></i> Descargar Datos</button>
+                    <label class="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-upload text-emerald-400"></i> Migrar .json USB<input type="file" id="importar-archivo-usb" accept=".json" onchange="window.importarDatosUSB(event)" class="hidden"></label>
                 </div>
                 <div class="flex gap-4 text-sm">
                     <span class="text-emerald-400 font-bold">Caja: S/ <span id="nav-liquidez">0.00</span></span>
@@ -154,12 +153,12 @@
             </div>
 
             <div class="flex gap-2 mb-6 overflow-x-auto">
-                <button onclick="switchFinTab('resumen')" id="fbtn-resumen" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium active">Resumen</button>
-                <button onclick="switchFinTab('capital')" id="fbtn-capital" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Capital</button>
-                <button onclick="switchFinTab('compras')" id="fbtn-compras" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Inventario</button>
-                <button onclick="switchFinTab('ventas')" id="fbtn-ventas" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Ventas</button>
-                <button onclick="switchFinTab('gastos')" id="fbtn-gastos" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Gastos</button>
-                <button onclick="switchFinTab('mensual')" id="fbtn-mensual" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Mensual</button>
+                <button onclick="window.switchFinTab('resumen')" id="fbtn-resumen" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium active">Resumen</button>
+                <button onclick="window.switchFinTab('capital')" id="fbtn-capital" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Capital</button>
+                <button onclick="window.switchFinTab('compras')" id="fbtn-compras" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Inventario</button>
+                <button onclick="window.switchFinTab('ventas')" id="fbtn-ventas" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Ventas</button>
+                <button onclick="window.switchFinTab('gastos')" id="fbtn-gastos" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Gastos</button>
+                <button onclick="window.switchFinTab('mensual')" id="fbtn-mensual" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Mensual</button>
             </div>
 
             <!-- Resumen -->
@@ -182,7 +181,7 @@
             <div id="ftab-capital" class="hidden space-y-6">
                 <div class="max-w-md glass p-6 rounded-2xl">
                     <h3 class="text-lg font-bold mb-4">Cargar Capital Inicial</h3>
-                    <form id="form-capital" onsubmit="saveCapital(event)" class="space-y-4">
+                    <form id="form-capital" onsubmit="window.saveCapital(event)" class="space-y-4">
                         <input type="number" id="input-capital" step="0.01" min="0" placeholder="0.00" required class="fin-input">
                         <button type="submit" class="btn-rocket w-full text-white font-semibold py-3 rounded-xl">Fijar Capital</button>
                     </form>
@@ -193,7 +192,7 @@
             <div id="ftab-compras" class="hidden space-y-6">
                 <div class="glass p-6 rounded-2xl">
                     <h3 id="form-compra-title" class="text-lg font-bold mb-4">Ingresar / Editar Producto</h3>
-                    <form id="form-compra" onsubmit="saveCompra(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                    <form id="form-compra" onsubmit="window.saveCompra(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                         <input type="hidden" id="compra-id">
                         <div><label class="text-xs text-gray-400 mb-1 block">Nombre</label><input type="text" id="compra-producto" required class="fin-input"></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">Categoría</label><input type="text" id="compra-categoria" required class="fin-input" placeholder="Ej: Audio"></div>
@@ -203,7 +202,7 @@
                         <div><label class="text-xs text-gray-400 mb-1 block">Cantidad (Stock)</label><input type="number" id="compra-cantidad" min="0" required class="fin-input"></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">Foto</label><input type="file" id="compra-img-file" accept="image/*" class="fin-input text-xs pt-2"></div>
                         <div class="lg:col-span-4 flex justify-end gap-2">
-                            <button type="button" onclick="resetCompraForm()" class="glass text-white px-4 py-2 rounded-xl text-sm">Cancelar</button>
+                            <button type="button" onclick="window.resetCompraForm()" class="glass text-white px-4 py-2 rounded-xl text-sm">Cancelar</button>
                             <button type="submit" class="btn-cyan text-white px-6 py-2 rounded-xl text-sm font-bold">Guardar Producto</button>
                         </div>
                     </form>
@@ -211,7 +210,7 @@
                 <div class="glass rounded-2xl overflow-hidden">
                     <div class="p-4 flex justify-between items-center">
                         <h4 class="font-bold">Inventario Actual</h4>
-                        <input type="text" id="search-compras" oninput="renderComprasTable()" placeholder="Buscar..." class="fin-input text-xs w-40">
+                        <input type="text" id="search-compras" oninput="window.renderComprasTable()" placeholder="Buscar..." class="fin-input text-xs w-40">
                     </div>
                     <div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="fin-table-head text-xs uppercase"><th class="p-4">Img</th><th class="p-4">Producto</th><th class="p-4">Categoría</th><th class="p-4">Stock</th><th class="p-4">P.C.</th><th class="p-4">P.V.</th><th class="p-4 text-right">Acc.</th></tr></thead><tbody id="table-compras-body" class="text-sm divide-y divide-white/5"></tbody></table></div>
                 </div>
@@ -221,8 +220,8 @@
             <div id="ftab-ventas" class="hidden space-y-6">
                 <div class="glass p-6 rounded-2xl">
                     <h3 class="text-lg font-bold mb-4">Registrar Venta</h3>
-                    <form id="form-venta" onsubmit="saveVenta(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                        <div><label class="text-xs text-gray-400 mb-1 block">Producto</label><select id="venta-producto" onchange="handleVentaProductChange()" class="fin-input"><option value="">--</option></select></div>
+                    <form id="form-venta" onsubmit="window.saveVenta(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                        <div><label class="text-xs text-gray-400 mb-1 block">Producto</label><select id="venta-producto" onchange="window.handleVentaProductChange()" class="fin-input"><option value="">--</option></select></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">Cant (Stock: <span id="venta-stock-disp">0</span>)</label><input type="number" id="venta-cantidad" min="1" required class="fin-input"></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">P. Real (u)</label><input type="number" id="venta-precio" step="0.01" required class="fin-input"></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">Mes</label><select id="venta-mes" class="fin-input"><option>Enero</option><option>Febrero</option><option>Marzo</option><option>Abril</option><option>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option><option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option></select></div>
@@ -233,7 +232,7 @@
                 <div class="glass rounded-2xl overflow-hidden">
                     <div class="p-4 flex justify-between items-center">
                         <h4 class="font-bold">Historial</h4>
-                        <input type="text" id="search-ventas" oninput="renderVentasTable()" placeholder="Buscar..." class="fin-input text-xs w-40">
+                        <input type="text" id="search-ventas" oninput="window.renderVentasTable()" placeholder="Buscar..." class="fin-input text-xs w-40">
                     </div>
                     <div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="fin-table-head text-xs uppercase"><th class="p-4">Mes</th><th class="p-4">Producto</th><th class="p-4">Cant</th><th class="p-4">Total</th><th class="p-4">Cond</th><th class="p-4 text-right">Acc</th></tr></thead><tbody id="table-ventas-body" class="text-sm divide-y divide-white/5"></tbody></table></div>
                 </div>
@@ -243,7 +242,7 @@
             <div id="ftab-gastos" class="hidden space-y-6">
                 <div class="glass p-6 rounded-2xl">
                     <h3 class="text-lg font-bold mb-4">Registrar Gasto</h3>
-                    <form id="form-gasto" onsubmit="saveGasto(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <form id="form-gasto" onsubmit="window.saveGasto(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div><label class="text-xs text-gray-400 mb-1 block">Concepto</label><input type="text" id="gasto-concepto" required class="fin-input"></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">Monto</label><input type="number" id="gasto-monto" step="0.01" required class="fin-input"></div>
                         <div><label class="text-xs text-gray-400 mb-1 block">Mes</label><select id="gasto-mes" class="fin-input"><option>Enero</option><option>Febrero</option><option>Marzo</option><option>Abril</option><option>Mayo</option><option>Junio</option><option>Julio</option><option>Agosto</option><option>Septiembre</option><option>Octubre</option><option>Noviembre</option><option>Diciembre</option></select></div>
@@ -349,7 +348,7 @@
             snapshot.forEach((d) => products.push({ id: d.id, ...d.data() }));
             products.sort((a, b) => (a.order || 999999) - (b.order || 999999));
             window.renderStore();
-            if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) renderComprasTable();
+            if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) window.renderComprasTable();
         });
 
         const subQ = query(collection(db, "subscribers"));
@@ -464,8 +463,7 @@
             r.readAsText(f); 
         }
         
-        function switchFinTab(id) { document.querySelectorAll('[id^="ftab-"]').forEach(el=>el.classList.add('hidden')); document.querySelectorAll('[id^="fbtn-"]').forEach(el=>el.classList.remove('active')); document.getElementById('ftab-'+id).classList.remove('hidden'); document.getElementById('fbtn-'+id).classList.add('active'); if(id==='resumen') updateCharts(); }
-        window.switchFinTab = switchFinTab;
+        window.switchFinTab = function(id) { document.querySelectorAll('[id^="ftab-"]').forEach(el=>el.classList.add('hidden')); document.querySelectorAll('[id^="fbtn-"]').forEach(el=>el.classList.remove('active')); document.getElementById('ftab-'+id).classList.remove('hidden'); document.getElementById('fbtn-'+id).classList.add('active'); if(id==='resumen') updateCharts(); }
 
         window.saveCapital = async function(e) { e.preventDefault(); finState.capital = parseFloat(document.getElementById('input-capital').value)||0; await saveFinances(); alert('Capital fijado.'); }
         
@@ -491,7 +489,7 @@
                 const data = { name, category, desc, cost, price, stock, img };
                 if(id) { await updateDoc(doc(db, "products", id), data); }
                 else { data.order = products.length; await addDoc(collection(db, "products"), data); }
-                resetCompraForm();
+                window.resetCompraForm();
             } catch(err) { alert("Error: " + err.message); }
             finally { submitBtn.innerHTML = 'Guardar Producto'; submitBtn.disabled = false; }
         }
@@ -508,12 +506,11 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         window.deleteCompra = async function(id) { if(confirm('¿Eliminar producto del inventario y tienda?')) await deleteDoc(doc(db, "products", id)); }
-        function resetCompraForm() {
+        window.resetCompraForm = function() {
             document.getElementById('form-compra').reset();
             document.getElementById('compra-id').value = '';
             document.getElementById('form-compra-title').innerText = "Ingresar / Editar Producto";
         }
-        window.resetCompraForm = resetCompraForm;
 
         window.handleVentaProductChange = function() { 
             const p = products.find(x => x.id === document.getElementById('venta-producto').value); 
@@ -572,7 +569,7 @@
             document.getElementById('card-total-egresos').innerText = `S/ ${tGto.toFixed(2)}`;
             document.getElementById('card-ganancia').innerText = `S/ ${gReal.toFixed(2)}`;
 
-            renderComprasTable(); renderVentasTable(); renderGastosTable(); renderMensualTable(); updateDatalists();
+            window.renderComprasTable(); window.renderVentasTable(); window.renderGastosTable(); window.renderMensualTable(); updateDatalists();
         }
 
         function updateDatalists() { 
@@ -581,17 +578,19 @@
             products.filter(p => (Number(p.stock) || 0) > 0).forEach(p => { const o=document.createElement('option'); o.value=p.id; o.innerText=`${p.name} (Stock: ${p.stock})`; sel.appendChild(o); }); 
             sel.value=cur; 
         }
-        function renderComprasTable() { 
+        
+        // BÚSQUEDAS DEL ADMIN HABILITADAS
+        window.renderComprasTable = function() { 
             const t=document.getElementById('table-compras-body'); if(!t) return; t.innerHTML=''; 
             const searchInput = document.getElementById('search-compras');
             const s = searchInput ? searchInput.value.toLowerCase() : ''; 
             let f = products; if(s) f=f.filter(p=>p.name.toLowerCase().includes(s)); 
             if(!f.length) return t.innerHTML=`<tr><td colspan="7" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; 
             f.forEach(p => { 
-                t.innerHTML+=`<tr class="fin-row"><td class="p-4"><img src="${p.img}" class="w-10 h-10 rounded-lg"></td><td class="p-4 font-medium">${p.name}</td><td class="p-4"><span class="badge-green px-2 py-1 rounded-full text-xs">${p.category||''}</span></td><td class="p-4 font-bold">${p.stock||0}u</td><td class="p-4">S/ ${(Number(p.cost)||0).toFixed(2)}</td><td class="p-4">S/ ${(Number(p.price)||0).toFixed(2)}</td><td class="p-4 text-right"><button class="text-emerald-400 mr-2" onclick="editCompra('${p.id}')"><i class="fas fa-edit"></i></button><button class="text-red-400" onclick="deleteCompra('${p.id}')"><i class="fas fa-trash"></i></button></td></tr>`; 
+                t.innerHTML+=`<tr class="fin-row"><td class="p-4"><img src="${p.img}" class="w-10 h-10 rounded-lg"></td><td class="p-4 font-medium">${p.name}</td><td class="p-4"><span class="badge-green px-2 py-1 rounded-full text-xs">${p.category||''}</span></td><td class="p-4 font-bold">${p.stock||0}u</td><td class="p-4">S/ ${(Number(p.cost)||0).toFixed(2)}</td><td class="p-4">S/ ${(Number(p.price)||0).toFixed(2)}</td><td class="p-4 text-right"><button class="text-emerald-400 mr-2" onclick="window.editCompra('${p.id}')"><i class="fas fa-edit"></i></button><button class="text-red-400" onclick="window.deleteCompra('${p.id}')"><i class="fas fa-trash"></i></button></td></tr>`; 
             }); 
         }
-        function renderVentasTable() { 
+        window.renderVentasTable = function() { 
             const t=document.getElementById('table-ventas-body'); if(!t) return; t.innerHTML=''; 
             const searchInput = document.getElementById('search-ventas');
             const s = searchInput ? searchInput.value.toLowerCase() : '';
@@ -599,11 +598,11 @@
             if(!f.length) return t.innerHTML=`<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; 
             f.slice().reverse().forEach(v=>{ 
                 const cond=v.condicion||'PAGADO'; const tot=(Number(v.precioV)||0)*(Number(v.cantidad)||0); 
-                t.innerHTML+=`<tr class="fin-row"><td class="p-4">${v.mes}</td><td class="p-4 font-medium">${v.producto}</td><td class="p-4">${v.cantidad}u</td><td class="p-4 font-bold">S/ ${tot.toFixed(2)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${cond==='PAGADO'?'badge-green':'badge-yellow'}">${cond}</span></td><td class="p-4 text-right">${cond==='PENDIENTE'?`<button onclick="liquidarCobroVenta('${v.id}')" class="badge-yellow text-xs px-2 py-1 rounded mr-2">Cobrar</button>`:''}<button class="text-red-400" onclick="deleteVenta('${v.id}')"><i class="fas fa-trash"></i></button></td></tr>`; 
+                t.innerHTML+=`<tr class="fin-row"><td class="p-4">${v.mes}</td><td class="p-4 font-medium">${v.producto}</td><td class="p-4">${v.cantidad}u</td><td class="p-4 font-bold">S/ ${tot.toFixed(2)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${cond==='PAGADO'?'badge-green':'badge-yellow'}">${cond}</span></td><td class="p-4 text-right">${cond==='PENDIENTE'?`<button onclick="window.liquidarCobroVenta('${v.id}')" class="badge-yellow text-xs px-2 py-1 rounded mr-2">Cobrar</button>`:''}<button class="text-red-400" onclick="window.deleteVenta('${v.id}')"><i class="fas fa-trash"></i></button></td></tr>`; 
             }); 
         }
-        function renderGastosTable() { const t=document.getElementById('table-gastos-body'); if(!t) return; t.innerHTML=''; if(!finState.gastos.length) return t.innerHTML=`<tr><td colspan="4" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; finState.gastos.slice().reverse().forEach(g=>{ t.innerHTML+=`<tr class="fin-row"><td class="p-4">${g.mes}</td><td class="p-4">${g.concepto}</td><td class="p-4 font-bold text-rose-400">S/ ${(Number(g.monto)||0).toFixed(2)}</td><td class="p-4 text-right"><button class="text-red-400" onclick="deleteGasto('${g.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
-        function renderMensualTable() { const t=document.getElementById('table-mensual-body'); if(!t) return; t.innerHTML=''; mesesLista.forEach(m=>{ const v=finState.ventas.filter(x=>x.mes===m && (x.condicion==='PAGADO'||!x.condicion)); const g=finState.gastos.filter(x=>x.mes===m); const tv=v.reduce((a, x) => a + ((Number(x.precioV)||0) * (Number(x.cantidad)||0)), 0); const tg=g.reduce((a, x) => a + (Number(x.monto)||0), 0); const gm=v.reduce((a, x) => a + (((Number(x.precioV)||0) - (Number(x.precioC)||0)) * (Number(x.cantidad)||0)), 0) - tg; if(tv||tg){ t.innerHTML+=`<tr class="fin-row"><td class="p-4 font-medium">${m}</td><td class="p-4 text-indigo-400">S/ ${tv.toFixed(2)}</td><td class="p-4 text-rose-400">S/ ${tg.toFixed(2)}</td><td class="p-4 text-emerald-400">S/ ${gm.toFixed(2)}</td></tr>`; } }); }
+        window.renderGastosTable = function() { const t=document.getElementById('table-gastos-body'); if(!t) return; t.innerHTML=''; if(!finState.gastos.length) return t.innerHTML=`<tr><td colspan="4" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; finState.gastos.slice().reverse().forEach(g=>{ t.innerHTML+=`<tr class="fin-row"><td class="p-4">${g.mes}</td><td class="p-4">${g.concepto}</td><td class="p-4 font-bold text-rose-400">S/ ${(Number(g.monto)||0).toFixed(2)}</td><td class="p-4 text-right"><button class="text-red-400" onclick="window.deleteGasto('${g.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
+        window.renderMensualTable = function() { const t=document.getElementById('table-mensual-body'); if(!t) return; t.innerHTML=''; mesesLista.forEach(m=>{ const v=finState.ventas.filter(x=>x.mes===m && (x.condicion==='PAGADO'||!x.condicion)); const g=finState.gastos.filter(x=>x.mes===m); const tv=v.reduce((a, x) => a + ((Number(x.precioV)||0) * (Number(x.cantidad)||0)), 0); const tg=g.reduce((a, x) => a + (Number(x.monto)||0), 0); const gm=v.reduce((a, x) => a + (((Number(x.precioV)||0) - (Number(x.precioC)||0)) * (Number(x.cantidad)||0)), 0) - tg; if(tv||tg){ t.innerHTML+=`<tr class="fin-row"><td class="p-4 font-medium">${m}</td><td class="p-4 text-indigo-400">S/ ${tv.toFixed(2)}</td><td class="p-4 text-rose-400">S/ ${tg.toFixed(2)}</td><td class="p-4 text-emerald-400">S/ ${gm.toFixed(2)}</td></tr>`; } }); }
 
         function initCharts() { 
             if(!document.getElementById('chartBalance')) return;
