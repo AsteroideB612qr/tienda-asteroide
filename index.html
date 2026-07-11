@@ -314,7 +314,10 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let products = []; let subscribers = []; let cart = JSON.parse(localStorage.getItem('b612_cart')) || []; let isAdmin = false;
+        let products = [];
+        let subscribers = [];
+        let cart = JSON.parse(localStorage.getItem('b612_cart')) || [];
+        let isAdmin = false;
         let finState = { capital: 0, compras: [], ventas: [], gastos: [] };
         let sortableInstance = null;
         const WHATSAPP_NUMBER = "51984908819";
@@ -353,7 +356,7 @@
 
         onAuthStateChanged(auth, (user) => { isAdmin = user ? true : false; });
 
-        // Listeners de Firebase
+        // Listeners Firebase (Tienda y Suscriptores)
         const q = query(collection(db, "products"));
         onSnapshot(q, (snapshot) => {
             products = [];
@@ -370,13 +373,20 @@
             if (!document.getElementById('admin-suscriptores-view').classList.contains('hidden')) window.renderSubscribers();
         });
 
+        // Listener Firebase (Finanzas) - Lee texto JSON
         const finRef = doc(db, "data", "finances");
         onSnapshot(finRef, (snap) => {
             if (snap.exists()) {
                 const data = snap.data();
                 if (data.json) {
                     try {
-                        finState = JSON.parse(data.json);
+                        const parsed = JSON.parse(data.json);
+                        finState = {
+                            capital: parsed.capital || 0,
+                            compras: parsed.compras || [],
+                            ventas: parsed.ventas || [],
+                            gastos: parsed.gastos || []
+                        };
                         updateAllDOM();
                     } catch(e) { console.error("Error leyendo finanzas", e); }
                 }
@@ -441,18 +451,12 @@
         const mesesLista = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         let chartBInstance = null; let chartRInstance = null;
 
-async function saveFinances() {
-    // Guardamos todo el estado como un texto (string) para evitar cualquier error de Firebase con listas o imágenes
-    await setDoc(finRef, { json: JSON.stringify(finState) });
-    updateAllDOM();
-    updateCharts();
-}
-        });
-    }
-    await setDoc(finRef, stateToSave);
-    updateAllDOM();
-    updateCharts();
-}
+        async function saveFinances() {
+            await setDoc(finRef, { json: JSON.stringify(finState) });
+            updateAllDOM();
+            updateCharts();
+        }
+        window.saveFinances = saveFinances;
         
         window.exportarDatosUSB = function() { const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(finState, null, 2)); const a = document.createElement('a'); a.href=d; a.download="asteroide_balance.json"; a.click(); }
         window.importarDatosUSB = function(e) { 
@@ -491,6 +495,9 @@ async function saveFinances() {
         window.deleteGasto = async function(id) { if(confirm('¿Eliminar?')){ finState.gastos=finState.gastos.filter(g=>g.id!==id); await saveFinances(); } }
 
         function updateAllDOM() {
+            const elLiq = document.getElementById('nav-liquidez');
+            if(!elLiq) return; // Si no estamos en la pestaña de finanzas, no actualizamos el DOM para evitar errores
+            
             const cap = finState.capital || 0; const stock = finState.compras.filter(c=>c.estado==='STOCK').reduce((a,c)=>a+c.precioC,0);
             const vPag = finState.ventas.filter(v=>v.condicion==='PAGADO'||!v.condicion); const vPend = finState.ventas.filter(v=>v.condicion==='PENDIENTE');
             const tVen = vPag.reduce((a,v)=>a+(v.precioV*v.cantidad),0); const tGto = finState.gastos.reduce((a,g)=>a+g.monto,0);
@@ -498,14 +505,14 @@ async function saveFinances() {
             const mPend = vPend.reduce((a,v)=>a+(v.precioV*v.cantidad),0); let cPend=0, gPend=0; vPend.forEach(v=>{ const cL=finState.compras.filter(c=>c.ventaId===v.id).reduce((a,c)=>a+c.precioC,0); cPend+=cL; gPend+=(v.precioV*v.cantidad)-cL; });
             const liq = cap - stock - cPend;
 
-            const elLiq = document.getElementById('nav-liquidez'); if(elLiq) elLiq.innerText = liq.toFixed(2);
-            const elPC = document.getElementById('nav-por-cobrar'); if(elPC) elPC.innerText = mPend.toFixed(2);
-            const elCap = document.getElementById('card-capital'); if(elCap) elCap.innerText = `S/ ${cap.toFixed(2)}`;
-            const elLiq2 = document.getElementById('card-liquidez'); if(elLiq2) elLiq2.innerText = `S/ ${liq.toFixed(2)}`;
-            const elMerc = document.getElementById('card-mercancia'); if(elMerc) elMerc.innerText = `S/ ${stock.toFixed(2)}`;
-            const elVen = document.getElementById('card-total-vendido'); if(elVen) elVen.innerText = `S/ ${tVen.toFixed(2)}`;
-            const elEgr = document.getElementById('card-total-egresos'); if(elEgr) elEgr.innerText = `S/ ${tGto.toFixed(2)}`;
-            const elGan = document.getElementById('card-ganancia'); if(elGan) elGan.innerText = `S/ ${gReal.toFixed(2)}`;
+            elLiq.innerText = liq.toFixed(2);
+            document.getElementById('nav-por-cobrar').innerText = mPend.toFixed(2);
+            document.getElementById('card-capital').innerText = `S/ ${cap.toFixed(2)}`;
+            document.getElementById('card-liquidez').innerText = `S/ ${liq.toFixed(2)}`;
+            document.getElementById('card-mercancia').innerText = `S/ ${stock.toFixed(2)}`;
+            document.getElementById('card-total-vendido').innerText = `S/ ${tVen.toFixed(2)}`;
+            document.getElementById('card-total-egresos').innerText = `S/ ${tGto.toFixed(2)}`;
+            document.getElementById('card-ganancia').innerText = `S/ ${gReal.toFixed(2)}`;
 
             renderComprasTable(); renderVentasTable(); renderGastosTable(); renderMensualTable(); renderInventarioTable(); updateDatalists();
         }
