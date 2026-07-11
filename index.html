@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
     <style>
         :root { --space-dark: #0B0E14; --asteroid-brown: #8B5E3C; --rocket-red: #E63946; --cosmic-cyan: #4CC9F0; --star-white: #F8F9FA; --whatsapp-green: #25D366; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--space-dark); color: var(--star-white); overflow-x: hidden; }
@@ -305,7 +306,7 @@
         let cart = JSON.parse(localStorage.getItem('b612_cart')) || [];
         let isAdmin = false;
         let finState = { capital: 0, ventas: [], gastos: [] };
-        let expandedProductId = null; // Para desplegar lotes
+        let expandedProductId = null;
         const WHATSAPP_NUMBER = "51984908819";
 
         function compressImage(file) {
@@ -323,6 +324,15 @@
                 }; reader.onerror = reject; reader.readAsDataURL(file);
             });
         }
+
+        // Funciones Matemáticas Seguras
+        const getRevenue = (v) => (Number(v.precioV) || 0) * (Number(v.cantidad) || 0);
+        const getCostoTotal = (v) => {
+            if (v.costoTotal !== undefined && v.costoTotal !== null && !isNaN(Number(v.costoTotal))) {
+                return Number(v.costoTotal);
+            }
+            return (Number(v.precioC) || 0) * (Number(v.cantidad) || 0);
+        };
 
         window.goToTop = function() { window.switchView('store'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
         window.goToProducts = function() { window.switchView('store'); setTimeout(() => document.getElementById('gadgets').scrollIntoView({ behavior: 'smooth' }), 100); }
@@ -349,7 +359,7 @@
             products = [];
             snapshot.forEach((d) => {
                 const data = d.data();
-                if (!data.lots) data.lots = [{ id: 'L-old', cost: data.cost || 0, qty: data.stock || 0 }]; // Migración en caliente
+                if (!data.lots) data.lots = [{ id: 'L-old', cost: Number(data.cost) || 0, qty: Number(data.stock) || 0 }];
                 products.push({ id: d.id, ...data });
             });
             products.sort((a, b) => (a.order || 999999) - (b.order || 999999));
@@ -378,7 +388,7 @@
             }
         });
 
-        // --- TIENDA (Con Filtro de Búsqueda) ---
+        // --- TIENDA ---
         window.renderStore = function() { 
             const c = document.getElementById('categories-container'); 
             const searchInput = document.getElementById('store-search');
@@ -468,7 +478,7 @@
                         const batch = writeBatch(db);
                         parsed.inventario.forEach(p => {
                             const newRef = doc(collection(db, "products"));
-                            if (!p.lots) p.lots = [{ id: 'L-old', cost: p.cost || 0, qty: p.stock || 0 }];
+                            if (!p.lots) p.lots = [{ id: 'L-old', cost: Number(p.cost) || 0, qty: Number(p.stock) || 0 }];
                             batch.set(newRef, { name: p.name, category: p.category || 'General', desc: p.desc || '', price: p.price || 0, img: p.img, lots: p.lots, order: p.order || 0 });
                         });
                         await batch.commit();
@@ -491,8 +501,8 @@
 
                     if (parsed.ventas) {
                         parsed.ventas.forEach(v => {
-                            if(!v.costoTotal) {
-                                v.costoTotal = (v.precioC || 0) * v.cantidad;
+                            if(v.costoTotal === undefined || v.costoTotal === null) {
+                                v.costoTotal = (Number(v.precioC) || 0) * (Number(v.cantidad) || 0);
                             }
                         });
                     }
@@ -530,7 +540,7 @@
                 if (id) {
                     const existing = products.find(p => p.id === id);
                     let lots = existing.lots || [];
-                    if (img === '') img = existing.img; // Mantener imagen si no se subió nueva
+                    if (img === '') img = existing.img; 
                     
                     if (qtyVal && costVal) {
                         const cost = parseFloat(costVal);
@@ -586,7 +596,7 @@
             if (c <= 0) { document.getElementById('venta-p-compra-auto').innerText = `S/ 0.00`; return; }
             let remaining = c;
             let costoTotal = 0;
-            const lots = [...p.lots].sort((a,b) => a.id.localeCompare(b.id));
+            const lots = p.lots.map(l => ({...l, qty: Number(l.qty)||0, cost: Number(l.cost)||0})).sort((a,b) => String(a.id).localeCompare(String(b.id)));
             for (let lot of lots) {
                 if (remaining <= 0) break;
                 const take = Math.min(lot.qty, remaining);
@@ -609,10 +619,9 @@
             const m = document.getElementById('venta-mes').value; 
             const cond = document.getElementById('venta-condicion').value; 
 
-            // Descontar FIFO
             let remaining = c;
             let costoTotal = 0;
-            const updatedLots = [...p.lots].sort((a,b) => a.id.localeCompare(b.id));
+            const updatedLots = p.lots.map(l => ({ id: l.id, cost: Number(l.cost) || 0, qty: Number(l.qty) || 0 })).sort((a, b) => String(a.id).localeCompare(String(b.id)));
             for (let lot of updatedLots) {
                 if (remaining <= 0) break;
                 const take = Math.min(lot.qty, remaining);
@@ -642,12 +651,11 @@
             const vPag = finState.ventas.filter(v => v.condicion === 'PAGADO' || !v.condicion); 
             const vPend = finState.ventas.filter(v => v.condicion === 'PENDIENTE');
             
-            const tVen = vPag.reduce((a, v) => a + ((Number(v.precioV) || 0) * (Number(v.cantidad) || 0)), 0); 
+            const tVen = vPag.reduce((a, v) => a + getRevenue(v), 0); 
             const tGto = finState.gastos.reduce((a, g) => a + (Number(g.monto) || 0), 0);
-            const getCostoTotal = (v) => Number(v.costoTotal) || ((Number(v.precioC) || 0) * (Number(v.cantidad) || 0));
-            const gReal = vPag.reduce((a, v) => a + ((Number(v.precioV) * Number(v.cantidad)) - getCostoTotal(v)), 0) - tGto;
+            const gReal = vPag.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0) - tGto;
             
-            const mPend = vPend.reduce((a, v) => a + ((Number(v.precioV) || 0) * (Number(v.cantidad) || 0)), 0); 
+            const mPend = vPend.reduce((a, v) => a + getRevenue(v), 0); 
             const cPend = vPend.reduce((a, v) => a + getCostoTotal(v), 0);
             
             const liq = cap - stock - cPend;
@@ -709,7 +717,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 ${p.lots.map(l => `
                                     <div class="bg-white/5 p-3 rounded-lg border border-white/10">
-                                        <p class="text-xs text-gray-400">Lote ID: ${l.id.substring(0,10)}</p>
+                                        <p class="text-xs text-gray-400">Lote ID: ${String(l.id).substring(0,10)}</p>
                                         <p class="text-lg font-bold">${l.qty} unidades</p>
                                         <p class="text-sm">Costo Unitario: S/ ${(Number(l.cost)||0).toFixed(2)}</p>
                                         <p class="text-sm font-bold text-cyan-400">Valor Lote: S/ ${((Number(l.cost)||0) * (Number(l.qty)||0)).toFixed(2)}</p>
@@ -728,20 +736,20 @@
             let f=finState.ventas; if(s) f=f.filter(v=>v.producto.toLowerCase().includes(s)); 
             if(!f.length) return t.innerHTML=`<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; 
             f.slice().reverse().forEach(v=>{ 
-                const cond=v.condicion||'PAGADO'; const tot=(Number(v.precioV)||0)*(Number(v.cantidad)||0); 
+                const cond=v.condicion||'PAGADO'; 
+                const tot=getRevenue(v); 
                 t.innerHTML+=`<tr class="fin-row"><td class="p-4">${v.mes}</td><td class="p-4 font-medium">${v.producto}</td><td class="p-4">${v.cantidad}u</td><td class="p-4 font-bold">S/ ${tot.toFixed(2)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${cond==='PAGADO'?'badge-green':'badge-yellow'}">${cond}</span></td><td class="p-4 text-right">${cond==='PENDIENTE'?`<button onclick="window.liquidarCobroVenta('${v.id}')" class="badge-yellow text-xs px-2 py-1 rounded mr-2">Cobrar</button>`:''}<button class="text-red-400" onclick="window.deleteVenta('${v.id}')"><i class="fas fa-trash"></i></button></td></tr>`; 
             }); 
         }
         window.renderGastosTable = function() { const t=document.getElementById('table-gastos-body'); if(!t) return; t.innerHTML=''; if(!finState.gastos.length) return t.innerHTML=`<tr><td colspan="4" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; finState.gastos.slice().reverse().forEach(g=>{ t.innerHTML+=`<tr class="fin-row"><td class="p-4">${g.mes}</td><td class="p-4">${g.concepto}</td><td class="p-4 font-bold text-rose-400">S/ ${(Number(g.monto)||0).toFixed(2)}</td><td class="p-4 text-right"><button class="text-red-400" onclick="window.deleteGasto('${g.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
         window.renderMensualTable = function() { 
             const t=document.getElementById('table-mensual-body'); if(!t) return; t.innerHTML=''; 
-            const getCostoTotal = (v) => Number(v.costoTotal) || ((Number(v.precioC) || 0) * (Number(v.cantidad) || 0));
             mesesLista.forEach(m=>{ 
                 const v=finState.ventas.filter(x=>x.mes===m && (x.condicion==='PAGADO'||!x.condicion)); 
                 const g=finState.gastos.filter(x=>x.mes===m); 
-                const tv=v.reduce((a, x) => a + ((Number(x.precioV)||0) * (Number(x.cantidad)||0)), 0); 
+                const tv=v.reduce((a, x) => a + getRevenue(x), 0); 
                 const tg=g.reduce((a, x) => a + (Number(x.monto)||0), 0); 
-                const gm=v.reduce((a, x) => a + ((Number(x.precioV) * Number(x.cantidad)) - getCostoTotal(x)), 0) - tg; 
+                const gm=v.reduce((a, x) => a + (getRevenue(x) - getCostoTotal(x)), 0) - tg; 
                 if(tv||tg){ t.innerHTML+=`<tr class="fin-row"><td class="p-4 font-medium">${m}</td><td class="p-4 text-indigo-400">S/ ${tv.toFixed(2)}</td><td class="p-4 text-rose-400">S/ ${tg.toFixed(2)}</td><td class="p-4 text-emerald-400">S/ ${gm.toFixed(2)}</td></tr>`; } 
             }); 
         }
@@ -757,8 +765,7 @@
             const stock = products.reduce((a, p) => a + (p.lots || []).reduce((b, l) => b + ((Number(l.cost) || 0) * (Number(l.qty) || 0)), 0), 0);
             const vPag = finState.ventas.filter(v => v.condicion === 'PAGADO' || !v.condicion); 
             const tGto = finState.gastos.reduce((a, g) => a + (Number(g.monto) || 0), 0);
-            const getCostoTotal = (v) => Number(v.costoTotal) || ((Number(v.precioC) || 0) * (Number(v.cantidad) || 0));
-            const gReal = vPag.reduce((a, v) => a + ((Number(v.precioV) * Number(v.cantidad)) - getCostoTotal(v)), 0) - tGto;
+            const gReal = vPag.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0) - tGto;
             const vPend = finState.ventas.filter(v => v.condicion === 'PENDIENTE');
             const cPend = vPend.reduce((a, v) => a + getCostoTotal(v), 0);
             const liq = cap - stock - cPend;
@@ -790,7 +797,7 @@
                         data: mesesLista.map(m => {
                             const v = finState.ventas.filter(x => x.mes === m && (x.condicion === 'PAGADO' || !x.condicion));
                             const g = finState.gastos.filter(x => x.mes === m);
-                            const gm = v.reduce((a, x) => a + ((Number(x.precioV) * Number(x.cantidad)) - getCostoTotal(x)), 0) - g.reduce((a, x) => a + (Number(x.monto) || 0), 0);
+                            const gm = v.reduce((a, x) => a + (getRevenue(x) - getCostoTotal(x)), 0) - g.reduce((a, x) => a + (Number(x.monto) || 0), 0);
                             return gm;
                         }),
                         borderColor: '#10b981',
