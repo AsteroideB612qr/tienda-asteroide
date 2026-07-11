@@ -144,7 +144,8 @@
             <div class="glass rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-2 flex-wrap">
                     <button onclick="window.exportarDatosUSB()" class="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs flex items-center gap-2"><i class="fa-solid fa-download text-cyan-400"></i> Descargar Datos</button>
-                    <label class="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-upload text-emerald-400"></i> Migrar .json USB<input type="file" id="importar-archivo-usb" accept=".json" onchange="window.importarDatosUSB(event)" class="hidden"></label>
+                    <label class="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-upload text-emerald-400"></i> Cargar .json<input type="file" id="importar-archivo-usb" accept=".json" onchange="window.importarDatosUSB(event)" class="hidden"></label>
+                    <button onclick="window.reiniciarSistema()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-2 rounded-lg text-xs flex items-center gap-2 border border-red-500/20"><i class="fa-solid fa-trash-can"></i> Reiniciar Todo a Cero</button>
                 </div>
                 <div class="flex gap-4 text-sm">
                     <span class="text-emerald-400 font-bold">Caja: S/ <span id="nav-liquidez">0.00</span></span>
@@ -292,7 +293,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, setDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, setDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyCZLvGKHsLEwmcbtj0K0OP6ZObDOeadtOQ", authDomain: "asteroideb612.firebaseapp.com", projectId: "asteroideb612", storageBucket: "asteroideb612.firebasestorage.app", messagingSenderId: "250595266468", appId: "1:250595266468:web:d2afa268fed017115bbb31", measurementId: "G-VH0YKEZK59" };
         const app = initializeApp(firebaseConfig);
@@ -423,6 +424,25 @@
         }
         window.saveFinances = saveFinances;
         
+        window.reiniciarSistema = async function() {
+            if (!confirm('¿ESTÁS SEGURO? Esto borrará TODO el inventario, ventas, gastos y capital. Esta acción no se puede deshacer.')) return;
+            try {
+                const prodSnapshot = await getDocs(collection(db, "products"));
+                const batch = writeBatch(db);
+                prodSnapshot.forEach((d) => batch.delete(d.ref));
+                await batch.commit();
+
+                finState = { capital: 0, ventas: [], gastos: [] };
+                await setDoc(finRef, finState);
+                
+                alert('Sistema reiniciado a cero. Ahora puedes cargar tu JSON limpiamente.');
+                updateAllDOM();
+                updateCharts();
+            } catch (e) {
+                alert('Error al reiniciar: ' + e.message);
+            }
+        }
+
         window.exportarDatosUSB = function() { 
             const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({capital: finState.capital, ventas: finState.ventas, gastos: finState.gastos, inventario: products}, null, 2)); 
             const a = document.createElement('a'); a.href=d; a.download="asteroide_backup.json"; a.click(); 
@@ -430,11 +450,31 @@
         
         window.importarDatosUSB = function(e) { 
             const f = e.target.files[0]; if(!f) return; 
+            if(!confirm('IMPORTANTE: Se borrará el inventario y finanzas actuales para reemplazarlos con los datos de tu archivo. ¿Deseas continuar?')) {
+                e.target.value = ''; return;
+            }
             const r = new FileReader(); 
             r.onload = async function(ev) { 
                 try { 
                     const parsed = JSON.parse(ev.target.result);
-                    if (parsed.compras && parsed.compras.length > 0) {
+                    
+                    // 1. Limpiar DB actual (Borrar todos los productos)
+                    const prodSnapshot = await getDocs(collection(db, "products"));
+                    const delBatch = writeBatch(db);
+                    prodSnapshot.forEach((d) => delBatch.delete(d.ref));
+                    await delBatch.commit();
+
+                    // 2. Migrar Inventario (Soporta formato viejo y nuevo)
+                    if (parsed.inventario && parsed.inventario.length > 0) {
+                        // Formato nuevo (exportado desde la web)
+                        const batch = writeBatch(db);
+                        parsed.inventario.forEach(p => {
+                            const newRef = doc(collection(db, "products"));
+                            batch.set(newRef, { name: p.name, category: p.category || 'General', desc: p.desc || '', cost: p.cost || 0, price: p.price || 0, stock: p.stock || 0, img: p.img, order: p.order || 0 });
+                        });
+                        await batch.commit();
+                    } else if (parsed.compras && parsed.compras.length > 0) {
+                        // Formato viejo (tu dashboard original)
                         const grouped = {};
                         parsed.compras.forEach(c => {
                             if(!grouped[c.producto]) grouped[c.producto] = { name: c.producto, category: 'General', desc: 'Migrado', cost: c.precioC, price: c.precioV, img: c.img, stock: 0 };
@@ -447,18 +487,27 @@
                         });
                         await batch.commit();
                     }
+
+                    // 3. Migrar Ventas
                     if (parsed.ventas) {
                         parsed.ventas.forEach(v => {
-                            if(!v.precioC) {
+                            if(!v.precioC && parsed.compras) {
                                 const cost = parsed.compras.filter(c => c.ventaId === v.id).reduce((acc, c) => acc + (Number(c.precioC)||0), 0);
                                 v.precioC = v.cantidad > 0 ? cost / v.cantidad : 0;
                             }
+                            if(!v.precioC) v.precioC = 0;
                         });
                     }
+
+                    // 4. Guardar Finanzas
                     finState = { capital: parsed.capital || 0, ventas: parsed.ventas || [], gastos: parsed.gastos || [] };
                     await saveFinances(); 
-                    alert("¡Migración exitosa!"); 
-                } catch(err) { alert("Error al leer el JSON: " + err.message); } 
+                    
+                    e.target.value = ''; // Limpiar input
+                    alert("¡Migración exitosa! Datos limpios cargados en la nube."); 
+                } catch(err) { 
+                    alert("Error al leer el JSON: " + err.message); 
+                } 
             }; 
             r.readAsText(f); 
         }
@@ -579,7 +628,6 @@
             sel.value=cur; 
         }
         
-        // BÚSQUEDAS DEL ADMIN HABILITADAS
         window.renderComprasTable = function() { 
             const t=document.getElementById('table-compras-body'); if(!t) return; t.innerHTML=''; 
             const searchInput = document.getElementById('search-compras');
