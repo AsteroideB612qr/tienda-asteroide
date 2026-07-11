@@ -164,10 +164,10 @@
             <div id="ftab-resumen" class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Capital Inicial</p><h3 id="card-capital" class="text-2xl font-bold mt-1 text-blue-400">S/ 0.00</h3></div><i class="fa-solid fa-building-columns text-blue-500 text-xl"></i></div>
-                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Liquidez (Caja Real)</p><h3 id="card-liquidez" class="text-2xl font-bold mt-1 text-emerald-400">S/ 0.00</h3></div><i class="fa-solid fa-scale-balanced text-emerald-500 text-xl"></i></div>
-                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Mercancía Física</p><h3 id="card-mercancia" class="text-2xl font-bold mt-1 text-amber-400">S/ 0.00</h3></div><i class="fa-solid fa-box text-amber-500 text-xl"></i></div>
-                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Ventas Cobradas</p><h3 id="card-total-vendido" class="text-2xl font-bold mt-1 text-indigo-400">S/ 0.00</h3></div><i class="fa-solid fa-cart-shopping text-indigo-500 text-xl"></i></div>
-                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Gastos Operativos</p><h3 id="card-total-egresos" class="text-2xl font-bold mt-1 text-rose-400">S/ 0.00</h3></div><i class="fa-solid fa-arrow-trend-down text-rose-500 text-xl"></i></div>
+                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Liquidez Disponible (Caja Real)</p><h3 id="card-liquidez" class="text-2xl font-bold mt-1 text-emerald-400">S/ 0.00</h3></div><i class="fa-solid fa-scale-balanced text-emerald-500 text-xl"></i></div>
+                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Mercancía en Stock Físico</p><h3 id="card-mercancia" class="text-2xl font-bold mt-1 text-amber-400">S/ 0.00</h3></div><i class="fa-solid fa-box text-amber-500 text-xl"></i></div>
+                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Ventas Cobradas (Monto Total)</p><h3 id="card-total-vendido" class="text-2xl font-bold mt-1 text-indigo-400">S/ 0.00</h3></div><i class="fa-solid fa-cart-shopping text-indigo-500 text-xl"></i></div>
+                    <div class="glass p-5 rounded-2xl flex items-center justify-between"><div><p class="text-xs text-gray-400 uppercase">Total Gastos Operativos</p><h3 id="card-total-egresos" class="text-2xl font-bold mt-1 text-rose-400">S/ 0.00</h3></div><i class="fa-solid fa-arrow-trend-down text-rose-500 text-xl"></i></div>
                     <div class="glass p-5 rounded-2xl flex items-center justify-between border-l-4 border-red-500"><div><p class="text-xs text-gray-400 uppercase">Ganancia Neta Realizada</p><h3 id="card-ganancia" class="text-2xl font-bold mt-1 text-white">S/ 0.00</h3></div><i class="fa-solid fa-dollar-sign text-red-500 text-xl"></i></div>
                 </div>
                 
@@ -350,7 +350,6 @@
             });
         }
 
-        // Funciones Matemáticas Seguras
         const safeNum = (val) => { const n = Number(val); return isNaN(n) ? 0 : n; };
         const getRevenue = (v) => safeNum(v.precioV) * safeNum(v.cantidad);
         const getCostoTotal = (v) => {
@@ -377,13 +376,11 @@
 
         onAuthStateChanged(auth, (user) => { isAdmin = user ? true : false; });
 
-        // Listeners Firebase
         const q = query(collection(db, "products"));
         onSnapshot(q, (snapshot) => {
             products = [];
             snapshot.forEach((d) => {
                 const data = d.data();
-                // Migración a units individuales
                 if (!data.units) {
                     let unitsArr = [];
                     if (data.lots) {
@@ -427,7 +424,6 @@
             }
         });
 
-        // --- TIENDA ---
         window.renderStore = function() { 
             const c = document.getElementById('categories-container'); 
             const searchInput = document.getElementById('store-search');
@@ -455,20 +451,15 @@
             }); 
         }
 
-        // --- SUSCRIPTORES ---
         window.saveSubscriber = async function(e) { e.preventDefault(); await addDoc(collection(db, "subscribers"), { contact: document.getElementById('subscriber-input').value, date: new Date().toLocaleString() }); alert("¡Gracias por unirte! 🚀"); document.getElementById('subscriber-input').value=''; }
         window.renderSubscribers = function() { const t = document.getElementById('admin-subscribers-list'); t.innerHTML = subscribers.length ? subscribers.map(s=>`<tr class="fin-row"><td class="p-3">${s.contact}</td><td class="p-3 text-gray-400">${s.date||''}</td></tr>`).join('') : `<tr><td colspan="2" class="p-4 text-center text-gray-500">Sin datos</td></tr>`; }
         window.exportSubscribers = function() { if(!subscribers.length) return alert("Sin datos"); let csv="Contacto,Fecha\n"; subscribers.forEach(s=>csv+=`"${s.contact}","${s.date||''}"\n`); let link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download='suscriptores.csv'; link.click(); }
 
-        // --- CARRITO ---
         window.addToCart = function(id) { const p = products.find(p=>p.id===id); if(!p) return; let item = cart.find(i=>i.id===id); if(item) item.qty++; else cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1}); localStorage.setItem('b612_cart', JSON.stringify(cart)); window.renderCart(); }
         window.renderCart = function() { const c = document.getElementById('cart-items'); let total=0, items=0; c.innerHTML = cart.length ? cart.map(i=>{ total+=safeNum(i.price)*safeNum(i.qty); items+=safeNum(i.qty); return `<div class="flex gap-4 items-center bg-white/5 p-3 rounded-xl"><img src="${i.img}" class="w-16 h-16 object-cover rounded-lg"><div><h5 class="font-bold text-sm">${i.name}</h5><p class="text-cyan-300 text-sm">S/ ${safeNum(i.price).toFixed(2)}</p></div><div class="ml-auto text-right"><span class="font-bold">S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}</span></div></div>`; }).join('') : `<p class="text-center text-gray-500 mt-10">Vacío</p>`; document.getElementById('cart-count').innerText=items; document.getElementById('cart-total').innerText=`S/ ${total.toFixed(2)}`; }
         window.toggleCart = function() { document.getElementById('cart-drawer').classList.toggle('open'); document.getElementById('cart-overlay').classList.toggle('open'); }
         window.checkoutWhatsApp = function() { if(!cart.length) return alert("Vacío"); let m="¡Hola Asteroide B612! 🚀 Quiero:%0A%0A"; let t=0; cart.forEach(i=>{m+=`*${i.qty}x ${i.name}* S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}%0A`; t+=safeNum(i.price)*safeNum(i.qty);}); m+=`%0A*Total: S/ ${t.toFixed(2)}*`; window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${m}`, '_blank'); }
 
-        // ==========================================
-        // LÓGICA DEL DASHBOARD FINANCIERO UNIFICADO
-        // ==========================================
         const mesesLista = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         let chartBInstance = null; let chartRInstance = null;
 
@@ -647,7 +638,7 @@
             if (newCost !== null && !isNaN(parseFloat(newCost))) {
                 u.cost = parseFloat(newCost);
                 await updateDoc(doc(db, "products", prodId), { units: p.units });
-                window.renderComprasTable(); // re-render to show new cost
+                window.renderComprasTable(); 
                 updateAllDOM();
             }
         }
@@ -686,7 +677,7 @@
             let costoTotal = 0;
             const updatedUnits = [...p.units];
             for (let i = 0; i < c; i++) {
-                const u = updatedUnits.shift(); // Remove oldest
+                const u = updatedUnits.shift();
                 costoTotal += safeNum(u.cost);
             }
             await updateDoc(doc(db, "products", p.id), { units: updatedUnits });
