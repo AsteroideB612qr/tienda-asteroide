@@ -325,13 +325,12 @@
             });
         }
 
-        // Funciones Matemáticas Seguras
-        const getRevenue = (v) => (Number(v.precioV) || 0) * (Number(v.cantidad) || 0);
+        // === FUNCIONES MATEMÁTICAS BLINDADAS (ANTI-NaN) ===
+        const safeNum = (val) => { const n = Number(val); return isNaN(n) ? 0 : n; };
+        const getRevenue = (v) => safeNum(v.precioV) * safeNum(v.cantidad);
         const getCostoTotal = (v) => {
-            if (v.costoTotal !== undefined && v.costoTotal !== null && !isNaN(Number(v.costoTotal))) {
-                return Number(v.costoTotal);
-            }
-            return (Number(v.precioC) || 0) * (Number(v.cantidad) || 0);
+            if (v.costoTotal !== undefined && v.costoTotal !== null && v.costoTotal !== '' && !isNaN(Number(v.costoTotal))) return Number(v.costoTotal);
+            return safeNum(v.precioC) * safeNum(v.cantidad);
         };
 
         window.goToTop = function() { window.switchView('store'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -359,7 +358,7 @@
             products = [];
             snapshot.forEach((d) => {
                 const data = d.data();
-                if (!data.lots) data.lots = [{ id: 'L-old', cost: Number(data.cost) || 0, qty: Number(data.stock) || 0 }];
+                if (!data.lots) data.lots = [{ id: 'L-old', cost: safeNum(data.cost), qty: safeNum(data.stock) }];
                 products.push({ id: d.id, ...data });
             });
             products.sort((a, b) => (a.order || 999999) - (b.order || 999999));
@@ -394,7 +393,7 @@
             const searchInput = document.getElementById('store-search');
             const queryStr = searchInput ? searchInput.value.toLowerCase().trim() : '';
             
-            let availableProducts = products.filter(p => p.lots.reduce((a, l) => a + (Number(l.qty) || 0), 0) > 0);
+            let availableProducts = products.filter(p => p.lots.reduce((a, l) => a + safeNum(l.qty), 0) > 0);
             
             if (queryStr) {
                 availableProducts = availableProducts.filter(p => 
@@ -412,7 +411,7 @@
             
             [...new Set(availableProducts.map(p=>p.category))].forEach(cat=>{ 
                 const ps=availableProducts.filter(p=>p.category===cat); 
-                c.innerHTML+=`<div><h4 class="text-2xl font-bold mb-8 pl-4 border-l-4 border-cyan-400">${cat}</h4><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">${ps.map(p=>`<div class="product-card rounded-2xl overflow-hidden flex flex-col"><div class="aspect-square bg-gray-900 overflow-hidden"><img src="${p.img}" class="w-full h-full object-cover opacity-90 hover:scale-110 transition"></div><div class="p-5 flex-grow flex flex-col"><h4 class="font-bold text-lg mb-1">${p.name}</h4><p class="text-gray-400 text-sm mb-4 flex-grow">${p.desc}</p><div class="flex justify-between items-center mt-auto"><span class="text-xl font-display font-bold text-cyan-300">S/ ${(Number(p.price)||0).toFixed(2)}</span><button onclick="window.addToCart('${p.id}')" class="w-10 h-10 rounded-full btn-rocket flex items-center justify-center"><i class="fas fa-plus text-white"></i></button></div></div></div>`).join('')}</div></div>`; 
+                c.innerHTML+=`<div><h4 class="text-2xl font-bold mb-8 pl-4 border-l-4 border-cyan-400">${cat}</h4><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">${ps.map(p=>`<div class="product-card rounded-2xl overflow-hidden flex flex-col"><div class="aspect-square bg-gray-900 overflow-hidden"><img src="${p.img}" class="w-full h-full object-cover opacity-90 hover:scale-110 transition"></div><div class="p-5 flex-grow flex flex-col"><h4 class="font-bold text-lg mb-1">${p.name}</h4><p class="text-gray-400 text-sm mb-4 flex-grow">${p.desc}</p><div class="flex justify-between items-center mt-auto"><span class="text-xl font-display font-bold text-cyan-300">S/ ${safeNum(p.price).toFixed(2)}</span><button onclick="window.addToCart('${p.id}')" class="w-10 h-10 rounded-full btn-rocket flex items-center justify-center"><i class="fas fa-plus text-white"></i></button></div></div></div>`).join('')}</div></div>`; 
             }); 
         }
 
@@ -423,9 +422,9 @@
 
         // --- CARRITO ---
         window.addToCart = function(id) { const p = products.find(p=>p.id===id); if(!p) return; let item = cart.find(i=>i.id===id); if(item) item.qty++; else cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1}); localStorage.setItem('b612_cart', JSON.stringify(cart)); window.renderCart(); }
-        window.renderCart = function() { const c = document.getElementById('cart-items'); let total=0, items=0; c.innerHTML = cart.length ? cart.map(i=>{ total+=i.price*i.qty; items+=i.qty; return `<div class="flex gap-4 items-center bg-white/5 p-3 rounded-xl"><img src="${i.img}" class="w-16 h-16 object-cover rounded-lg"><div><h5 class="font-bold text-sm">${i.name}</h5><p class="text-cyan-300 text-sm">S/ ${i.price.toFixed(2)}</p></div><div class="ml-auto text-right"><span class="font-bold">S/ ${(i.price*i.qty).toFixed(2)}</span></div></div>`; }).join('') : `<p class="text-center text-gray-500 mt-10">Vacío</p>`; document.getElementById('cart-count').innerText=items; document.getElementById('cart-total').innerText=`S/ ${total.toFixed(2)}`; }
+        window.renderCart = function() { const c = document.getElementById('cart-items'); let total=0, items=0; c.innerHTML = cart.length ? cart.map(i=>{ total+=safeNum(i.price)*safeNum(i.qty); items+=safeNum(i.qty); return `<div class="flex gap-4 items-center bg-white/5 p-3 rounded-xl"><img src="${i.img}" class="w-16 h-16 object-cover rounded-lg"><div><h5 class="font-bold text-sm">${i.name}</h5><p class="text-cyan-300 text-sm">S/ ${safeNum(i.price).toFixed(2)}</p></div><div class="ml-auto text-right"><span class="font-bold">S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}</span></div></div>`; }).join('') : `<p class="text-center text-gray-500 mt-10">Vacío</p>`; document.getElementById('cart-count').innerText=items; document.getElementById('cart-total').innerText=`S/ ${total.toFixed(2)}`; }
         window.toggleCart = function() { document.getElementById('cart-drawer').classList.toggle('open'); document.getElementById('cart-overlay').classList.toggle('open'); }
-        window.checkoutWhatsApp = function() { if(!cart.length) return alert("Vacío"); let m="¡Hola Asteroide B612! 🚀 Quiero:%0A%0A"; let t=0; cart.forEach(i=>{m+=`*${i.qty}x ${i.name}* S/ ${(i.price*i.qty).toFixed(2)}%0A`; t+=i.price*i.qty;}); m+=`%0A*Total: S/ ${t.toFixed(2)}*`; window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${m}`, '_blank'); }
+        window.checkoutWhatsApp = function() { if(!cart.length) return alert("Vacío"); let m="¡Hola Asteroide B612! 🚀 Quiero:%0A%0A"; let t=0; cart.forEach(i=>{m+=`*${i.qty}x ${i.name}* S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}%0A`; t+=safeNum(i.price)*safeNum(i.qty);}); m+=`%0A*Total: S/ ${t.toFixed(2)}*`; window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${m}`, '_blank'); }
 
         // ==========================================
         // LÓGICA DEL DASHBOARD FINANCIERO UNIFICADO
@@ -478,7 +477,7 @@
                         const batch = writeBatch(db);
                         parsed.inventario.forEach(p => {
                             const newRef = doc(collection(db, "products"));
-                            if (!p.lots) p.lots = [{ id: 'L-old', cost: Number(p.cost) || 0, qty: Number(p.stock) || 0 }];
+                            if (!p.lots) p.lots = [{ id: 'L-old', cost: safeNum(p.cost), qty: safeNum(p.stock) }];
                             batch.set(newRef, { name: p.name, category: p.category || 'General', desc: p.desc || '', price: p.price || 0, img: p.img, lots: p.lots, order: p.order || 0 });
                         });
                         await batch.commit();
@@ -502,7 +501,7 @@
                     if (parsed.ventas) {
                         parsed.ventas.forEach(v => {
                             if(v.costoTotal === undefined || v.costoTotal === null) {
-                                v.costoTotal = (Number(v.precioC) || 0) * (Number(v.cantidad) || 0);
+                                v.costoTotal = safeNum(v.precioC) * safeNum(v.cantidad);
                             }
                         });
                     }
@@ -584,7 +583,7 @@
         window.handleVentaProductChange = function() { 
             const p = products.find(x => x.id === document.getElementById('venta-producto').value); 
             if(!p) return; 
-            const stock = p.lots.reduce((a, l) => a + (Number(l.qty) || 0), 0);
+            const stock = p.lots.reduce((a, l) => a + safeNum(l.qty), 0);
             document.getElementById('venta-stock-disp').innerText = stock; 
             document.getElementById('venta-precio').value = p.price || 0; 
             window.calcVentaPreview();
@@ -596,7 +595,7 @@
             if (c <= 0) { document.getElementById('venta-p-compra-auto').innerText = `S/ 0.00`; return; }
             let remaining = c;
             let costoTotal = 0;
-            const lots = p.lots.map(l => ({...l, qty: Number(l.qty)||0, cost: Number(l.cost)||0})).sort((a,b) => String(a.id).localeCompare(String(b.id)));
+            const lots = p.lots.map(l => ({...l, qty: safeNum(l.qty), cost: safeNum(l.cost)})).sort((a,b) => String(a.id).localeCompare(String(b.id)));
             for (let lot of lots) {
                 if (remaining <= 0) break;
                 const take = Math.min(lot.qty, remaining);
@@ -612,7 +611,7 @@
             const p = products.find(x => x.id === document.getElementById('venta-producto').value); 
             if(!p) return alert('Selecciona producto'); 
             const c = parseInt(document.getElementById('venta-cantidad').value); 
-            const totalStock = p.lots.reduce((a, l) => a + (Number(l.qty) || 0), 0);
+            const totalStock = p.lots.reduce((a, l) => a + safeNum(l.qty), 0);
             if(c > totalStock) return alert('Stock insuficiente.'); 
             
             const pv = parseFloat(document.getElementById('venta-precio').value); 
@@ -621,7 +620,7 @@
 
             let remaining = c;
             let costoTotal = 0;
-            const updatedLots = p.lots.map(l => ({ id: l.id, cost: Number(l.cost) || 0, qty: Number(l.qty) || 0 })).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+            const updatedLots = p.lots.map(l => ({ id: l.id, cost: safeNum(l.cost), qty: safeNum(l.qty) })).sort((a, b) => String(a.id).localeCompare(String(b.id)));
             for (let lot of updatedLots) {
                 if (remaining <= 0) break;
                 const take = Math.min(lot.qty, remaining);
@@ -646,13 +645,13 @@
             const elLiq = document.getElementById('nav-liquidez');
             if(!elLiq) return; 
             
-            const cap = Number(finState.capital) || 0; 
-            const stock = products.reduce((a, p) => a + (p.lots || []).reduce((b, l) => b + ((Number(l.cost) || 0) * (Number(l.qty) || 0)), 0), 0);
+            const cap = safeNum(finState.capital); 
+            const stock = products.reduce((a, p) => a + (p.lots || []).reduce((b, l) => b + (safeNum(l.cost) * safeNum(l.qty)), 0), 0);
             const vPag = finState.ventas.filter(v => v.condicion === 'PAGADO' || !v.condicion); 
             const vPend = finState.ventas.filter(v => v.condicion === 'PENDIENTE');
             
             const tVen = vPag.reduce((a, v) => a + getRevenue(v), 0); 
-            const tGto = finState.gastos.reduce((a, g) => a + (Number(g.monto) || 0), 0);
+            const tGto = finState.gastos.reduce((a, g) => a + safeNum(g.monto), 0);
             const gReal = vPag.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0) - tGto;
             
             const mPend = vPend.reduce((a, v) => a + getRevenue(v), 0); 
@@ -676,7 +675,7 @@
             const sel = document.getElementById('venta-producto'); const cur=sel.value; 
             sel.innerHTML='<option value="">--</option>'; 
             products.forEach(p => { 
-                const stock = p.lots.reduce((a, l) => a + (Number(l.qty) || 0), 0);
+                const stock = p.lots.reduce((a, l) => a + safeNum(l.qty), 0);
                 if (stock > 0) {
                     const o=document.createElement('option'); o.value=p.id; o.innerText=`${p.name} (Stock: ${stock})`; sel.appendChild(o); 
                 }
@@ -697,13 +696,13 @@
             if(!f.length) return t.innerHTML=`<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; 
             
             f.forEach(p => { 
-                const totalStock = p.lots.reduce((a, l) => a + (Number(l.qty) || 0), 0);
+                const totalStock = p.lots.reduce((a, l) => a + safeNum(l.qty), 0);
                 t.innerHTML += `<tr class="fin-row">
                     <td class="p-4"><img src="${p.img}" class="w-10 h-10 rounded-lg"></td>
                     <td class="p-4 font-medium">${p.name}</td>
                     <td class="p-4"><span class="badge-green px-2 py-1 rounded-full text-xs">${p.category||''}</span></td>
                     <td class="p-4 font-bold">${totalStock}u</td>
-                    <td class="p-4">S/ ${(Number(p.price)||0).toFixed(2)}</td>
+                    <td class="p-4">S/ ${safeNum(p.price).toFixed(2)}</td>
                     <td class="p-4 text-right whitespace-nowrap">
                         <button class="text-cyan-400 mr-2" onclick="window.toggleLots('${p.id}')"><i class="fas fa-chevron-down"></i></button>
                         <button class="text-emerald-400 mr-2" onclick="window.editCompra('${p.id}')"><i class="fas fa-edit"></i></button>
@@ -718,9 +717,9 @@
                                 ${p.lots.map(l => `
                                     <div class="bg-white/5 p-3 rounded-lg border border-white/10">
                                         <p class="text-xs text-gray-400">Lote ID: ${String(l.id).substring(0,10)}</p>
-                                        <p class="text-lg font-bold">${l.qty} unidades</p>
-                                        <p class="text-sm">Costo Unitario: S/ ${(Number(l.cost)||0).toFixed(2)}</p>
-                                        <p class="text-sm font-bold text-cyan-400">Valor Lote: S/ ${((Number(l.cost)||0) * (Number(l.qty)||0)).toFixed(2)}</p>
+                                        <p class="text-lg font-bold">${safeNum(l.qty)} unidades</p>
+                                        <p class="text-sm">Costo Unitario: S/ ${safeNum(l.cost).toFixed(2)}</p>
+                                        <p class="text-sm font-bold text-cyan-400">Valor Lote: S/ ${(safeNum(l.cost) * safeNum(l.qty)).toFixed(2)}</p>
                                     </div>
                                 `).join('')}
                             </div>
@@ -741,14 +740,14 @@
                 t.innerHTML+=`<tr class="fin-row"><td class="p-4">${v.mes}</td><td class="p-4 font-medium">${v.producto}</td><td class="p-4">${v.cantidad}u</td><td class="p-4 font-bold">S/ ${tot.toFixed(2)}</td><td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${cond==='PAGADO'?'badge-green':'badge-yellow'}">${cond}</span></td><td class="p-4 text-right">${cond==='PENDIENTE'?`<button onclick="window.liquidarCobroVenta('${v.id}')" class="badge-yellow text-xs px-2 py-1 rounded mr-2">Cobrar</button>`:''}<button class="text-red-400" onclick="window.deleteVenta('${v.id}')"><i class="fas fa-trash"></i></button></td></tr>`; 
             }); 
         }
-        window.renderGastosTable = function() { const t=document.getElementById('table-gastos-body'); if(!t) return; t.innerHTML=''; if(!finState.gastos.length) return t.innerHTML=`<tr><td colspan="4" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; finState.gastos.slice().reverse().forEach(g=>{ t.innerHTML+=`<tr class="fin-row"><td class="p-4">${g.mes}</td><td class="p-4">${g.concepto}</td><td class="p-4 font-bold text-rose-400">S/ ${(Number(g.monto)||0).toFixed(2)}</td><td class="p-4 text-right"><button class="text-red-400" onclick="window.deleteGasto('${g.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
+        window.renderGastosTable = function() { const t=document.getElementById('table-gastos-body'); if(!t) return; t.innerHTML=''; if(!finState.gastos.length) return t.innerHTML=`<tr><td colspan="4" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; finState.gastos.slice().reverse().forEach(g=>{ t.innerHTML+=`<tr class="fin-row"><td class="p-4">${g.mes}</td><td class="p-4">${g.concepto}</td><td class="p-4 font-bold text-rose-400">S/ ${safeNum(g.monto).toFixed(2)}</td><td class="p-4 text-right"><button class="text-red-400" onclick="window.deleteGasto('${g.id}')"><i class="fas fa-trash"></i></button></td></tr>`; }); }
         window.renderMensualTable = function() { 
             const t=document.getElementById('table-mensual-body'); if(!t) return; t.innerHTML=''; 
             mesesLista.forEach(m=>{ 
                 const v=finState.ventas.filter(x=>x.mes===m && (x.condicion==='PAGADO'||!x.condicion)); 
                 const g=finState.gastos.filter(x=>x.mes===m); 
                 const tv=v.reduce((a, x) => a + getRevenue(x), 0); 
-                const tg=g.reduce((a, x) => a + (Number(x.monto)||0), 0); 
+                const tg=g.reduce((a, x) => a + safeNum(x.monto), 0); 
                 const gm=v.reduce((a, x) => a + (getRevenue(x) - getCostoTotal(x)), 0) - tg; 
                 if(tv||tg){ t.innerHTML+=`<tr class="fin-row"><td class="p-4 font-medium">${m}</td><td class="p-4 text-indigo-400">S/ ${tv.toFixed(2)}</td><td class="p-4 text-rose-400">S/ ${tg.toFixed(2)}</td><td class="p-4 text-emerald-400">S/ ${gm.toFixed(2)}</td></tr>`; } 
             }); 
@@ -761,10 +760,10 @@
             if(chartBInstance) chartBInstance.destroy(); 
             if(chartRInstance) chartRInstance.destroy(); 
 
-            const cap = Number(finState.capital) || 0; 
-            const stock = products.reduce((a, p) => a + (p.lots || []).reduce((b, l) => b + ((Number(l.cost) || 0) * (Number(l.qty) || 0)), 0), 0);
+            const cap = safeNum(finState.capital); 
+            const stock = products.reduce((a, p) => a + (p.lots || []).reduce((b, l) => b + (safeNum(l.cost) * safeNum(l.qty)), 0), 0);
             const vPag = finState.ventas.filter(v => v.condicion === 'PAGADO' || !v.condicion); 
-            const tGto = finState.gastos.reduce((a, g) => a + (Number(g.monto) || 0), 0);
+            const tGto = finState.gastos.reduce((a, g) => a + safeNum(g.monto), 0);
             const gReal = vPag.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0) - tGto;
             const vPend = finState.ventas.filter(v => v.condicion === 'PENDIENTE');
             const cPend = vPend.reduce((a, v) => a + getCostoTotal(v), 0);
@@ -797,7 +796,7 @@
                         data: mesesLista.map(m => {
                             const v = finState.ventas.filter(x => x.mes === m && (x.condicion === 'PAGADO' || !x.condicion));
                             const g = finState.gastos.filter(x => x.mes === m);
-                            const gm = v.reduce((a, x) => a + (getRevenue(x) - getCostoTotal(x)), 0) - g.reduce((a, x) => a + (Number(x.monto) || 0), 0);
+                            const gm = v.reduce((a, x) => a + (getRevenue(x) - getCostoTotal(x)), 0) - g.reduce((a, x) => a + safeNum(x.monto), 0);
                             return gm;
                         }),
                         borderColor: '#10b981',
