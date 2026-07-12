@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
     <style>
         :root { --space-dark: #0B0E14; --asteroid-brown: #8B5E3C; --rocket-red: #E63946; --cosmic-cyan: #4CC9F0; --star-white: #F8F9FA; --whatsapp-green: #25D366; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--space-dark); color: var(--star-white); overflow-x: hidden; }
@@ -44,6 +45,7 @@
         .badge-green { background: rgba(16, 185, 129, 0.2); color: rgb(52, 211, 153); }
         .badge-yellow { background: rgba(245, 158, 11, 0.2); color: rgb(251, 191, 36); }
         .badge-red { background: rgba(239, 68, 68, 0.2); color: rgb(248, 113, 113); }
+        .grab-handle { cursor: grab; } .grab-handle:active { cursor: grabbing; } .sortable-ghost { opacity: 0.3; background: rgba(76, 201, 240, 0.2); }
     </style>
 </head>
 <body>
@@ -171,7 +173,6 @@
                     <div class="glass p-5 rounded-2xl flex items-center justify-between border-l-4 border-red-500"><div><p class="text-xs text-gray-400 uppercase">Ganancia Neta Realizada</p><h3 id="card-ganancia" class="text-2xl font-bold mt-1 text-white">S/ 0.00</h3></div><i class="fa-solid fa-dollar-sign text-red-500 text-xl"></i></div>
                 </div>
                 
-                <!-- PANEL DE VALORES FLOTANTES -->
                 <div class="glass p-6 rounded-2xl">
                     <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
                         <div class="flex items-center gap-3">
@@ -183,18 +184,9 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-black/20 p-4 rounded-xl border border-white/5">
-                            <p class="text-xs font-medium text-gray-400">Monto Pendiente de Cobro</p>
-                            <h5 id="float-por-cobrar" class="text-xl font-bold mt-1 text-amber-400">S/ 0.00</h5>
-                        </div>
-                        <div class="bg-black/20 p-4 rounded-xl border border-white/5">
-                            <p class="text-xs font-medium text-gray-400">Liquidez Flotante (Costos)</p>
-                            <h5 id="float-liquidez" class="text-xl font-bold mt-1 text-blue-400">S/ 0.00</h5>
-                        </div>
-                        <div class="bg-black/20 p-4 rounded-xl border border-white/5">
-                            <p class="text-xs font-medium text-gray-400">Ganancia Flotante Estimada</p>
-                            <h5 id="float-ganancia" class="text-xl font-bold mt-1 text-emerald-400">S/ 0.00</h5>
-                        </div>
+                        <div class="bg-black/20 p-4 rounded-xl border border-white/5"><p class="text-xs font-medium text-gray-400">Monto Pendiente de Cobro</p><h5 id="float-por-cobrar" class="text-xl font-bold mt-1 text-amber-400">S/ 0.00</h5></div>
+                        <div class="bg-black/20 p-4 rounded-xl border border-white/5"><p class="text-xs font-medium text-gray-400">Liquidez Flotante (Costos)</p><h5 id="float-liquidez" class="text-xl font-bold mt-1 text-blue-400">S/ 0.00</h5></div>
+                        <div class="bg-black/20 p-4 rounded-xl border border-white/5"><p class="text-xs font-medium text-gray-400">Ganancia Flotante Estimada</p><h5 id="float-ganancia" class="text-xl font-bold mt-1 text-emerald-400">S/ 0.00</h5></div>
                     </div>
                 </div>
 
@@ -239,7 +231,21 @@
                         <h4 class="font-bold">Inventario Actual</h4>
                         <input type="text" id="search-compras" oninput="window.renderComprasTable()" placeholder="Buscar..." class="fin-input text-xs w-40">
                     </div>
-                    <div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="fin-table-head text-xs uppercase"><th class="p-4">Img</th><th class="p-4">Producto</th><th class="p-4">Categoría</th><th class="p-4">Total Stock</th><th class="p-4">P. Venta</th><th class="p-4 text-right">Acc.</th></tr></thead><tbody id="table-compras-body" class="text-sm divide-y divide-white/5"></tbody></table></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="fin-table-head text-xs uppercase">
+                                    <th class="p-4 w-8"></th>
+                                    <th class="p-4">Img</th>
+                                    <th class="p-4">Producto</th>
+                                    <th class="p-4">Total Stock</th>
+                                    <th class="p-4">P. Venta</th>
+                                    <th class="p-4 text-right">Acc.</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-compras-body" class="text-sm divide-y divide-white/5"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -332,6 +338,7 @@
         let isAdmin = false;
         let finState = { capital: 0, ventas: [], gastos: [] };
         let expandedProductId = null;
+        let sortableInstance = null; // Para arrastrar y soltar
         const WHATSAPP_NUMBER = "51984908819";
 
         function compressImage(file) {
@@ -350,7 +357,6 @@
             });
         }
 
-        // === FUNCIONES MATEMÁTICAS BLINDADAS (ANTI-NaN) ===
         const safeNum = (val) => { const n = Number(val); return isNaN(n) ? 0 : n; };
         const getRevenue = (v) => safeNum(v.precioV) * safeNum(v.cantidad);
         const getCostoTotal = (v) => {
@@ -377,7 +383,6 @@
 
         onAuthStateChanged(auth, (user) => { isAdmin = user ? true : false; });
 
-        // Listeners Firebase
         const q = query(collection(db, "products"));
         onSnapshot(q, (snapshot) => {
             products = [];
@@ -426,7 +431,6 @@
             }
         });
 
-        // --- TIENDA ---
         window.renderStore = function() { 
             const c = document.getElementById('categories-container'); 
             const searchInput = document.getElementById('store-search');
@@ -454,20 +458,15 @@
             }); 
         }
 
-        // --- SUSCRIPTORES ---
         window.saveSubscriber = async function(e) { e.preventDefault(); await addDoc(collection(db, "subscribers"), { contact: document.getElementById('subscriber-input').value, date: new Date().toLocaleString() }); alert("¡Gracias por unirte! 🚀"); document.getElementById('subscriber-input').value=''; }
         window.renderSubscribers = function() { const t = document.getElementById('admin-subscribers-list'); t.innerHTML = subscribers.length ? subscribers.map(s=>`<tr class="fin-row"><td class="p-3">${s.contact}</td><td class="p-3 text-gray-400">${s.date||''}</td></tr>`).join('') : `<tr><td colspan="2" class="p-4 text-center text-gray-500">Sin datos</td></tr>`; }
         window.exportSubscribers = function() { if(!subscribers.length) return alert("Sin datos"); let csv="Contacto,Fecha\n"; subscribers.forEach(s=>csv+=`"${s.contact}","${s.date||''}"\n`); let link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download='suscriptores.csv'; link.click(); }
 
-        // --- CARRITO ---
         window.addToCart = function(id) { const p = products.find(p=>p.id===id); if(!p) return; let item = cart.find(i=>i.id===id); if(item) item.qty++; else cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1}); localStorage.setItem('b612_cart', JSON.stringify(cart)); window.renderCart(); }
         window.renderCart = function() { const c = document.getElementById('cart-items'); let total=0, items=0; c.innerHTML = cart.length ? cart.map(i=>{ total+=safeNum(i.price)*safeNum(i.qty); items+=safeNum(i.qty); return `<div class="flex gap-4 items-center bg-white/5 p-3 rounded-xl"><img src="${i.img}" class="w-16 h-16 object-cover rounded-lg"><div><h5 class="font-bold text-sm">${i.name}</h5><p class="text-cyan-300 text-sm">S/ ${safeNum(i.price).toFixed(2)}</p></div><div class="ml-auto text-right"><span class="font-bold">S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}</span></div></div>`; }).join('') : `<p class="text-center text-gray-500 mt-10">Vacío</p>`; document.getElementById('cart-count').innerText=items; document.getElementById('cart-total').innerText=`S/ ${total.toFixed(2)}`; }
         window.toggleCart = function() { document.getElementById('cart-drawer').classList.toggle('open'); document.getElementById('cart-overlay').classList.toggle('open'); }
         window.checkoutWhatsApp = function() { if(!cart.length) return alert("Vacío"); let m="¡Hola Asteroide B612! 🚀 Quiero:%0A%0A"; let t=0; cart.forEach(i=>{m+=`*${i.qty}x ${i.name}* S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}%0A`; t+=safeNum(i.price)*safeNum(i.qty);}); m+=`%0A*Total: S/ ${t.toFixed(2)}*`; window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${m}`, '_blank'); }
 
-        // ==========================================
-        // LÓGICA DEL DASHBOARD FINANCIERO UNIFICADO
-        // ==========================================
         const mesesLista = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         let chartBInstance = null; let chartRInstance = null;
 
@@ -550,12 +549,10 @@
                         await batch.commit();
                     }
 
-                    // MIGRACIÓN INTELIGENTE DE VENTAS: Busca el costo real en el JSON viejo si falta
                     if (parsed.ventas) {
                         parsed.ventas.forEach(v => {
                             if (v.costoTotal === undefined || v.costoTotal === null || isNaN(Number(v.costoTotal)) || Number(v.costoTotal) === 0) {
                                 if (parsed.compras && parsed.compras.length > 0) {
-                                    // Busca los items asociados a esta venta en el formato viejo
                                     v.costoTotal = parsed.compras.filter(c => c.ventaId === v.id).reduce((acc, c) => acc + safeNum(c.precioC), 0);
                                 } else {
                                     v.costoTotal = safeNum(v.precioC) * safeNum(v.cantidad);
@@ -691,7 +688,7 @@
             let costoTotal = 0;
             const updatedUnits = [...p.units];
             for (let i = 0; i < c; i++) {
-                const u = updatedUnits.shift(); // Remove oldest
+                const u = updatedUnits.shift(); 
                 costoTotal += safeNum(u.cost);
             }
             await updateDoc(doc(db, "products", p.id), { units: updatedUnits });
@@ -718,17 +715,13 @@
             const tVen = vPag.reduce((a, v) => a + getRevenue(v), 0); 
             const tGto = finState.gastos.reduce((a, g) => a + safeNum(g.monto), 0);
             
-            // 1. Sumatoria de diferencias de TODOS los productos vendidos
             const grossProfitAll = finState.ventas.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0);
-            // 2. Ganancia Flotante (Sumatoria de diferencias de pendientes)
             const gPend = vPend.reduce((a, v) => a + (getRevenue(v) - getCostoTotal(v)), 0);
-            // 3. Ganancia Neta Realizada = GrossProfitAll - Ganancia Flotante - Gastos
             const gReal = grossProfitAll - gPend - tGto;
             
             const mPend = vPend.reduce((a, v) => a + getRevenue(v), 0); 
-            const cPend = vPend.reduce((a, v) => a + getCostoTotal(v), 0); // Liquidez Flotante
+            const cPend = vPend.reduce((a, v) => a + getCostoTotal(v), 0); 
             
-            // Caja Real = Capital - Mercancía - Liquidez Flotante
             const liq = cap - stock - cPend;
 
             elLiq.innerText = liq.toFixed(2);
@@ -766,46 +759,102 @@
             window.renderComprasTable();
         }
 
+        // === NUEVA FUNCIÓN DE INVENTARIO AGRUPADO POR CATEGORÍA ===
         window.renderComprasTable = function() { 
-            const t=document.getElementById('table-compras-body'); if(!t) return; t.innerHTML=''; 
+            const t=document.getElementById('table-compras-body'); 
+            if(!t) return; 
+            t.innerHTML=''; 
             const searchInput = document.getElementById('search-compras');
             const s = searchInput ? searchInput.value.toLowerCase() : ''; 
-            let f = products; if(s) f=f.filter(p=>p.name.toLowerCase().includes(s)); 
-            if(!f.length) return t.innerHTML=`<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin registros</td></tr>`; 
             
-            f.forEach(p => { 
-                t.innerHTML += `<tr class="fin-row">
-                    <td class="p-4"><img src="${p.img}" class="w-10 h-10 rounded-lg"></td>
-                    <td class="p-4 font-medium">${p.name}</td>
-                    <td class="p-4"><span class="badge-green px-2 py-1 rounded-full text-xs">${p.category||''}</span></td>
-                    <td class="p-4 font-bold">${p.units.length}u</td>
-                    <td class="p-4">S/ ${safeNum(p.price).toFixed(2)}</td>
-                    <td class="p-4 text-right whitespace-nowrap">
-                        <button class="text-cyan-400 mr-2" onclick="window.toggleUnits('${p.id}')"><i class="fas fa-chevron-down"></i></button>
-                        <button class="text-emerald-400 mr-2" onclick="window.editCompra('${p.id}')"><i class="fas fa-edit"></i></button>
-                        <button class="text-red-400" onclick="window.deleteCompra('${p.id}')"><i class="fas fa-trash"></i></button>
+            let f = products; 
+            if(s) f = f.filter(p => p.name.toLowerCase().includes(s) || (p.category && p.category.toLowerCase().includes(s))); 
+            
+            if(!f.length) {
+                t.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Sin registros</td></tr>`;
+                return;
+            }
+
+            // Agrupar por categoría
+            const grouped = {};
+            f.forEach(p => {
+                const cat = p.category || 'Sin Categoría';
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(p);
+            });
+
+            // Ordenar categorías alfabéticamente y productos por 'order'
+            const sortedCategories = Object.keys(grouped).sort();
+            sortedCategories.forEach(cat => {
+                grouped[cat].sort((a, b) => (a.order || 999999) - (b.order || 999999));
+            });
+
+            let html = '';
+            sortedCategories.forEach(cat => {
+                html += `<tr class="cat-header bg-white/5 border-b border-t border-white/10">
+                    <td colspan="6" class="p-3 font-bold text-cyan-300 uppercase tracking-wider text-sm">
+                        <i class="fas fa-tags mr-2"></i>${cat}
                     </td>
                 </tr>`;
-
-                if (expandedProductId === p.id) {
-                    t.innerHTML += `<tr class="bg-black/20">
-                        <td colspan="6" class="p-4">
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                                ${p.units.map(u => `
-                                    <div class="bg-white/5 p-3 rounded-lg border border-white/10 flex items-center justify-between">
-                                        <div>
-                                            <p class="text-xs text-gray-400">ID: ${String(u.id).substring(0,12)}</p>
-                                            <p class="text-sm font-bold text-cyan-400">Costo: S/ ${safeNum(u.cost).toFixed(2)}</p>
-                                        </div>
-                                        <button class="text-yellow-400" onclick="window.editUnit('${p.id}','${u.id}')"><i class="fas fa-edit"></i></button>
-                                    </div>
-                                `).join('')}
-                            </div>
+                
+                grouped[cat].forEach(p => {
+                    html += `<tr data-id="${p.id}" class="fin-row grab-handle">
+                        <td class="p-4 text-gray-500"><i class="fas fa-grip-vertical"></i></td>
+                        <td class="p-4"><img src="${p.img}" class="w-10 h-10 rounded-lg"></td>
+                        <td class="p-4 font-medium">${p.name}</td>
+                        <td class="p-4 font-bold">${p.units.length}u</td>
+                        <td class="p-4">S/ ${safeNum(p.price).toFixed(2)}</td>
+                        <td class="p-4 text-right whitespace-nowrap">
+                            <button class="text-cyan-400 mr-2" onclick="window.toggleUnits('${p.id}')"><i class="fas fa-chevron-down"></i></button>
+                            <button class="text-emerald-400 mr-2" onclick="window.editCompra('${p.id}')"><i class="fas fa-edit"></i></button>
+                            <button class="text-red-400" onclick="window.deleteCompra('${p.id}')"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>`;
+
+                    if (expandedProductId === p.id) {
+                        html += `<tr class="bg-black/20">
+                            <td colspan="6" class="p-4">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                    ${p.units.map(u => `
+                                        <div class="bg-white/5 p-3 rounded-lg border border-white/10 flex items-center justify-between">
+                                            <div>
+                                                <p class="text-xs text-gray-400">ID: ${String(u.id).substring(0,12)}</p>
+                                                <p class="text-sm font-bold text-cyan-400">Costo: S/ ${safeNum(u.cost).toFixed(2)}</p>
+                                            </div>
+                                            <button class="text-yellow-400" onclick="window.editUnit('${p.id}','${u.id}')"><i class="fas fa-edit"></i></button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </td>
+                        </tr>`;
+                    }
+                });
+            });
+            t.innerHTML = html;
+
+            // Inicializar Sortable (Arrastrar y soltar)
+            if (sortableInstance) sortableInstance.destroy();
+            sortableInstance = Sortable.create(t, {
+                handle: '.grab-handle',
+                filter: '.cat-header', // Prevenir que se arrastren los títulos de categoría
+                preventOnFilter: false,
+                animation: 150,
+                onEnd: async function (evt) {
+                    const rows = t.querySelectorAll('tr[data-id]');
+                    const batch = writeBatch(db);
+                    rows.forEach((row, index) => {
+                        const id = row.getAttribute('data-id');
+                        batch.update(doc(db, "products", id), { order: index });
+                    });
+                    try { 
+                        await batch.commit(); 
+                    } catch (e) { 
+                        alert("Error al guardar orden: " + e.message); 
+                    }
                 }
-            }); 
+            });
         }
+
         window.renderVentasTable = function() { 
             const t=document.getElementById('table-ventas-body'); if(!t) return; t.innerHTML=''; 
             const searchInput = document.getElementById('search-ventas');
