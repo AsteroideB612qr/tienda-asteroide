@@ -338,7 +338,7 @@
         let isAdmin = false;
         let finState = { capital: 0, ventas: [], gastos: [] };
         let expandedProductId = null;
-        let sortableInstance = null; // Para arrastrar y soltar
+        let sortableInstance = null; 
         const WHATSAPP_NUMBER = "51984908819";
 
         function compressImage(file) {
@@ -462,8 +462,60 @@
         window.renderSubscribers = function() { const t = document.getElementById('admin-subscribers-list'); t.innerHTML = subscribers.length ? subscribers.map(s=>`<tr class="fin-row"><td class="p-3">${s.contact}</td><td class="p-3 text-gray-400">${s.date||''}</td></tr>`).join('') : `<tr><td colspan="2" class="p-4 text-center text-gray-500">Sin datos</td></tr>`; }
         window.exportSubscribers = function() { if(!subscribers.length) return alert("Sin datos"); let csv="Contacto,Fecha\n"; subscribers.forEach(s=>csv+=`"${s.contact}","${s.date||''}"\n`); let link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download='suscriptores.csv'; link.click(); }
 
-        window.addToCart = function(id) { const p = products.find(p=>p.id===id); if(!p) return; let item = cart.find(i=>i.id===id); if(item) item.qty++; else cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1}); localStorage.setItem('b612_cart', JSON.stringify(cart)); window.renderCart(); }
-        window.renderCart = function() { const c = document.getElementById('cart-items'); let total=0, items=0; c.innerHTML = cart.length ? cart.map(i=>{ total+=safeNum(i.price)*safeNum(i.qty); items+=safeNum(i.qty); return `<div class="flex gap-4 items-center bg-white/5 p-3 rounded-xl"><img src="${i.img}" class="w-16 h-16 object-cover rounded-lg"><div><h5 class="font-bold text-sm">${i.name}</h5><p class="text-cyan-300 text-sm">S/ ${safeNum(i.price).toFixed(2)}</p></div><div class="ml-auto text-right"><span class="font-bold">S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}</span></div></div>`; }).join('') : `<p class="text-center text-gray-500 mt-10">Vacío</p>`; document.getElementById('cart-count').innerText=items; document.getElementById('cart-total').innerText=`S/ ${total.toFixed(2)}`; }
+        // --- CARRITO CORREGIDO ---
+        window.addToCart = function(id) { 
+            const p = products.find(p=>p.id===id); if(!p) return; 
+            let item = cart.find(i=>i.id===id); 
+            if(item) item.qty++; else cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1}); 
+            localStorage.setItem('b612_cart', JSON.stringify(cart)); 
+            window.renderCart(); 
+        }
+        
+        window.updateQty = function(id, change) {
+            let cartItem = cart.find(item => item.id === id);
+            if (cartItem) {
+                cartItem.qty += change;
+                if (cartItem.qty <= 0) {
+                    cart = cart.filter(item => item.id !== id);
+                }
+            }
+            localStorage.setItem('b612_cart', JSON.stringify(cart));
+            window.renderCart();
+        }
+
+        window.removeItem = function(id) {
+            cart = cart.filter(item => item.id !== id);
+            localStorage.setItem('b612_cart', JSON.stringify(cart));
+            window.renderCart();
+        }
+        
+        window.renderCart = function() { 
+            const c = document.getElementById('cart-items'); 
+            let total=0, items=0; 
+            c.innerHTML = cart.length ? cart.map(i => { 
+                total+=safeNum(i.price)*safeNum(i.qty); 
+                items+=safeNum(i.qty); 
+                return `<div class="flex gap-4 items-center bg-white/5 p-3 rounded-xl">
+                    <img src="${i.img}" class="w-16 h-16 object-cover rounded-lg">
+                    <div class="flex-grow">
+                        <h5 class="font-bold text-sm">${i.name}</h5>
+                        <p class="text-cyan-300 text-sm">S/ ${safeNum(i.price).toFixed(2)}</p>
+                        <div class="flex items-center gap-3 mt-2">
+                            <button onclick="window.updateQty('${i.id}', -1)" class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><i class="fas fa-minus text-xs"></i></button>
+                            <span class="font-bold text-sm">${i.qty}</span>
+                            <button onclick="window.updateQty('${i.id}', 1)" class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><i class="fas fa-plus text-xs"></i></button>
+                        </div>
+                    </div>
+                    <div class="text-right flex flex-col items-end justify-between h-full">
+                        <button onclick="window.removeItem('${i.id}')" class="text-red-400 hover:text-red-300 text-sm mb-2"><i class="fas fa-trash"></i></button>
+                        <span class="font-bold text-sm">S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}</span>
+                    </div>
+                </div>`; 
+            }).join('') : `<p class="text-center text-gray-500 mt-10">Tu asteroide está vacío</p>`; 
+            document.getElementById('cart-count').innerText=items; 
+            document.getElementById('cart-total').innerText=`S/ ${total.toFixed(2)}`; 
+        }
+        
         window.toggleCart = function() { document.getElementById('cart-drawer').classList.toggle('open'); document.getElementById('cart-overlay').classList.toggle('open'); }
         window.checkoutWhatsApp = function() { if(!cart.length) return alert("Vacío"); let m="¡Hola Asteroide B612! 🚀 Quiero:%0A%0A"; let t=0; cart.forEach(i=>{m+=`*${i.qty}x ${i.name}* S/ ${(safeNum(i.price)*safeNum(i.qty)).toFixed(2)}%0A`; t+=safeNum(i.price)*safeNum(i.qty);}); m+=`%0A*Total: S/ ${t.toFixed(2)}*`; window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${m}`, '_blank'); }
 
@@ -759,7 +811,6 @@
             window.renderComprasTable();
         }
 
-        // === NUEVA FUNCIÓN DE INVENTARIO AGRUPADO POR CATEGORÍA ===
         window.renderComprasTable = function() { 
             const t=document.getElementById('table-compras-body'); 
             if(!t) return; 
@@ -775,7 +826,6 @@
                 return;
             }
 
-            // Agrupar por categoría
             const grouped = {};
             f.forEach(p => {
                 const cat = p.category || 'Sin Categoría';
@@ -783,7 +833,6 @@
                 grouped[cat].push(p);
             });
 
-            // Ordenar categorías alfabéticamente y productos por 'order'
             const sortedCategories = Object.keys(grouped).sort();
             sortedCategories.forEach(cat => {
                 grouped[cat].sort((a, b) => (a.order || 999999) - (b.order || 999999));
@@ -832,11 +881,10 @@
             });
             t.innerHTML = html;
 
-            // Inicializar Sortable (Arrastrar y soltar)
             if (sortableInstance) sortableInstance.destroy();
             sortableInstance = Sortable.create(t, {
                 handle: '.grab-handle',
-                filter: '.cat-header', // Prevenir que se arrastren los títulos de categoría
+                filter: '.cat-header', 
                 preventOnFilter: false,
                 animation: 150,
                 onEnd: async function (evt) {
