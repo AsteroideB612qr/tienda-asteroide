@@ -966,23 +966,37 @@
                 }
             });
 
+            // Gráfico de Evolución actualizado con dos líneas
             chartRInstance = new Chart(document.getElementById('chartRendimiento'), {
                 type: 'line',
                 data: {
                     labels: mesesLista,
-                    datasets: [{
-                        label: 'Ganancia',
-                        data: mesesLista.map(m => {
-                            const v = finState.ventas.filter(x => x.mes === m && (x.condicion === 'PAGADO' || !x.condicion));
-                            const g = finState.gastos.filter(x => x.mes === m);
-                            const gm = v.reduce((a, x) => a + (getRevenue(x) - getCostoTotal(x)), 0) - g.reduce((a, x) => a + safeNum(x.monto), 0);
-                            return gm;
-                        }),
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16,185,129,0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
+                    datasets: [
+                        {
+                            label: 'Ventas Cobradas',
+                            data: mesesLista.map(m => {
+                                const v = finState.ventas.filter(x => x.mes === m && (x.condicion === 'PAGADO' || !x.condicion));
+                                return v.reduce((a, x) => a + getRevenue(x), 0);
+                            }),
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                            fill: false,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Ganancia',
+                            data: mesesLista.map(m => {
+                                const v = finState.ventas.filter(x => x.mes === m && (x.condicion === 'PAGADO' || !x.condicion));
+                                const g = finState.gastos.filter(x => x.mes === m);
+                                const gm = v.reduce((a, x) => a + (getRevenue(x) - getCostoTotal(x)), 0) - g.reduce((a, x) => a + safeNum(x.monto), 0);
+                                return gm;
+                            }),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16,185,129,0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
                 }
             });
         }
