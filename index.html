@@ -46,6 +46,8 @@
         .badge-yellow { background: rgba(245, 158, 11, 0.2); color: rgb(251, 191, 36); }
         .badge-red { background: rgba(239, 68, 68, 0.2); color: rgb(248, 113, 113); }
         .grab-handle { cursor: grab; } .grab-handle:active { cursor: grabbing; } .sortable-ghost { opacity: 0.3; background: rgba(76, 201, 240, 0.2); }
+        .cat-toggle-icon { transition: transform 0.3s ease; display: inline-block; }
+        .cat-collapsed .cat-toggle-icon { transform: rotate(-90deg); }
     </style>
 </head>
 <body>
@@ -99,7 +101,7 @@
             <div class="max-w-xl mx-auto mb-10">
                 <input type="text" id="store-search" oninput="window.renderStore()" placeholder="Buscar gadgets en el universo..." class="w-full px-6 py-3 rounded-full bg-white/10 border border-white/20 focus:outline-none focus:border-cyan-400 text-white text-center">
             </div>
-            <div id="categories-container" class="space-y-20"></div>
+            <div id="categories-container" class="space-y-12"></div>
         </section>
         <section class="px-6 md:px-20 py-20">
             <div class="glass rounded-3xl p-10 md:p-20 flex flex-col md:flex-row items-center justify-between relative overflow-hidden">
@@ -160,6 +162,7 @@
                 <button onclick="window.switchFinTab('ventas')" id="fbtn-ventas" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Ventas</button>
                 <button onclick="window.switchFinTab('gastos')" id="fbtn-gastos" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Gastos</button>
                 <button onclick="window.switchFinTab('mensual')" id="fbtn-mensual" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Mensual</button>
+                <button onclick="window.switchFinTab('categorias')" id="fbtn-categorias" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium">Categorías</button>
             </div>
 
             <!-- Resumen -->
@@ -295,6 +298,15 @@
                     <div class="overflow-x-auto"><table class="w-full text-left"><thead><tr class="fin-table-head text-xs uppercase"><th class="p-4">Mes</th><th class="p-4 text-indigo-400">Ventas</th><th class="p-4 text-rose-400">Gastos</th><th class="p-4 text-emerald-400">Ganancia</th></tr></thead><tbody id="table-mensual-body" class="text-sm divide-y divide-white/5 font-medium"></tbody></table></div>
                 </div>
             </div>
+
+            <!-- Categorías (Orden) -->
+            <div id="ftab-categorias" class="hidden space-y-6">
+                <div class="glass rounded-2xl overflow-hidden p-6">
+                    <h4 class="font-bold mb-2">Orden de Categorías</h4>
+                    <p class="text-xs text-gray-400 mb-4">Arrastra para cambiar el orden en que se muestran en la tienda.</p>
+                    <div id="category-sort-list" class="space-y-2"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -336,9 +348,10 @@
         let subscribers = [];
         let cart = JSON.parse(localStorage.getItem('b612_cart')) || [];
         let isAdmin = false;
-        let finState = { capital: 0, ventas: [], gastos: [] };
+        let finState = { capital: 0, ventas: [], gastos: [], categoryOrder: [] };
         let expandedProductId = null;
         let sortableInstance = null; 
+        let catSortableInstance = null;
         const WHATSAPP_NUMBER = "51984908819";
 
         function compressImage(file) {
@@ -362,6 +375,17 @@
         const getCostoTotal = (v) => {
             if (v.costoTotal !== undefined && v.costoTotal !== null && v.costoTotal !== '' && !isNaN(Number(v.costoTotal))) return Number(v.costoTotal);
             return safeNum(v.precioC) * safeNum(v.cantidad);
+        };
+
+        // Sort function for categories
+        const sortCats = (a, b) => {
+            const order = finState.categoryOrder || [];
+            const ia = order.indexOf(a);
+            const ib = order.indexOf(b);
+            if (ia === -1 && ib === -1) return a.localeCompare(b);
+            if (ia === -1) return 1;
+            if (ib === -1) return -1;
+            return ia - ib;
         };
 
         window.goToTop = function() { window.switchView('store'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -407,7 +431,10 @@
             });
             products.sort((a, b) => (a.order || 999999) - (b.order || 999999));
             window.renderStore();
-            if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) window.renderComprasTable();
+            if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) {
+                window.renderComprasTable();
+                window.renderCategorySortList();
+            }
             updateAllDOM();
         });
 
@@ -425,11 +452,24 @@
                 finState = {
                     capital: data.capital || 0,
                     ventas: data.ventas || [],
-                    gastos: data.gastos || []
+                    gastos: data.gastos || [],
+                    categoryOrder: data.categoryOrder || []
                 };
                 updateAllDOM();
+                if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) {
+                    window.renderCategorySortList();
+                }
             }
         });
+
+        // --- TIENDA CON CATEGORÍAS COLAPSABLES ---
+        window.toggleCategory = function(catId) {
+            const grid = document.getElementById('grid-' + catId);
+            const header = document.getElementById('header-' + catId);
+            if(!grid || !header) return;
+            grid.classList.toggle('hidden');
+            header.classList.toggle('cat-collapsed');
+        }
 
         window.renderStore = function() { 
             const c = document.getElementById('categories-container'); 
@@ -452,9 +492,31 @@
                 return;
             } 
             
-            [...new Set(availableProducts.map(p=>p.category))].forEach(cat=>{ 
-                const ps=availableProducts.filter(p=>p.category===cat); 
-                c.innerHTML+=`<div><h4 class="text-2xl font-bold mb-8 pl-4 border-l-4 border-cyan-400">${cat}</h4><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">${ps.map(p=>`<div class="product-card rounded-2xl overflow-hidden flex flex-col"><div class="aspect-square bg-gray-900 overflow-hidden"><img src="${p.img}" class="w-full h-full object-cover opacity-90 hover:scale-110 transition"></div><div class="p-5 flex-grow flex flex-col"><h4 class="font-bold text-lg mb-1">${p.name}</h4><p class="text-gray-400 text-sm mb-4 flex-grow">${p.desc}</p><div class="flex justify-between items-center mt-auto"><span class="text-xl font-display font-bold text-cyan-300">S/ ${safeNum(p.price).toFixed(2)}</span><button onclick="window.addToCart('${p.id}')" class="w-10 h-10 rounded-full btn-rocket flex items-center justify-center"><i class="fas fa-plus text-white"></i></button></div></div></div>`).join('')}</div></div>`; 
+            let categories = [...new Set(availableProducts.map(p => p.category || 'Sin Categoría'))];
+            categories.sort((a, b) => sortCats(a, b));
+
+            categories.forEach(cat => { 
+                const catId = cat.replace(/[^a-zA-Z0-9]/g, '');
+                const ps = availableProducts.filter(p => (p.category || 'Sin Categoría') === cat); 
+                c.innerHTML += `<div>
+                    <h4 id="header-${catId}" onclick="window.toggleCategory('${catId}')" class="text-2xl font-bold mb-8 pl-4 border-l-4 border-cyan-400 cursor-pointer flex items-center gap-3 hover:text-cyan-300 transition select-none">
+                        <i class="fas fa-chevron-down cat-toggle-icon text-lg"></i>
+                        ${cat}
+                    </h4>
+                    <div id="grid-${catId}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                        ${ps.map(p => `<div class="product-card rounded-2xl overflow-hidden flex flex-col">
+                            <div class="aspect-square bg-gray-900 overflow-hidden"><img src="${p.img}" class="w-full h-full object-cover opacity-90 hover:scale-110 transition"></div>
+                            <div class="p-5 flex-grow flex flex-col">
+                                <h4 class="font-bold text-lg mb-1">${p.name}</h4>
+                                <p class="text-gray-400 text-sm mb-4 flex-grow">${p.desc}</p>
+                                <div class="flex justify-between items-center mt-auto">
+                                    <span class="text-xl font-display font-bold text-cyan-300">S/ ${safeNum(p.price).toFixed(2)}</span>
+                                    <button onclick="window.addToCart('${p.id}')" class="w-10 h-10 rounded-full btn-rocket flex items-center justify-center"><i class="fas fa-plus text-white"></i></button>
+                                </div>
+                            </div>
+                        </div>`).join('')}
+                    </div>
+                </div>`; 
             }); 
         }
 
@@ -462,7 +524,6 @@
         window.renderSubscribers = function() { const t = document.getElementById('admin-subscribers-list'); t.innerHTML = subscribers.length ? subscribers.map(s=>`<tr class="fin-row"><td class="p-3">${s.contact}</td><td class="p-3 text-gray-400">${s.date||''}</td></tr>`).join('') : `<tr><td colspan="2" class="p-4 text-center text-gray-500">Sin datos</td></tr>`; }
         window.exportSubscribers = function() { if(!subscribers.length) return alert("Sin datos"); let csv="Contacto,Fecha\n"; subscribers.forEach(s=>csv+=`"${s.contact}","${s.date||''}"\n`); let link=document.createElement('a'); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download='suscriptores.csv'; link.click(); }
 
-        // --- CARRITO CORREGIDO ---
         window.addToCart = function(id) { 
             const p = products.find(p=>p.id===id); if(!p) return; 
             let item = cart.find(i=>i.id===id); 
@@ -537,7 +598,7 @@
                 prodSnapshot.forEach((d) => batch.delete(d.ref));
                 await batch.commit();
 
-                finState = { capital: 0, ventas: [], gastos: [] };
+                finState = { capital: 0, ventas: [], gastos: [], categoryOrder: [] };
                 await setDoc(finRef, finState);
                 
                 alert('Sistema reiniciado a cero.');
@@ -547,7 +608,7 @@
         }
 
         window.exportarDatosUSB = function() { 
-            const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({capital: finState.capital, ventas: finState.ventas, gastos: finState.gastos, inventario: products.map(p => ({...p, units: p.units}))}, null, 2)); 
+            const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({capital: finState.capital, ventas: finState.ventas, gastos: finState.gastos, categoryOrder: finState.categoryOrder, inventario: products.map(p => ({...p, units: p.units}))}, null, 2)); 
             const a = document.createElement('a'); a.href=d; a.download="asteroide_backup.json"; a.click(); 
         }
         
@@ -612,7 +673,7 @@
                             }
                         });
                     }
-                    finState = { capital: parsed.capital || 0, ventas: parsed.ventas || [], gastos: parsed.gastos || [] };
+                    finState = { capital: parsed.capital || 0, ventas: parsed.ventas || [], gastos: parsed.gastos || [], categoryOrder: parsed.categoryOrder || [] };
                     await saveFinances(); 
                     e.target.value = ''; 
                     alert("¡Migración exitosa! Datos limpios cargados."); 
@@ -621,7 +682,7 @@
             r.readAsText(f); 
         }
         
-        window.switchFinTab = function(id) { document.querySelectorAll('[id^="ftab-"]').forEach(el=>el.classList.add('hidden')); document.querySelectorAll('[id^="fbtn-"]').forEach(el=>el.classList.remove('active')); document.getElementById('ftab-'+id).classList.remove('hidden'); document.getElementById('fbtn-'+id).classList.add('active'); if(id==='resumen') updateCharts(); }
+        window.switchFinTab = function(id) { document.querySelectorAll('[id^="ftab-"]').forEach(el=>el.classList.add('hidden')); document.querySelectorAll('[id^="fbtn-"]').forEach(el=>el.classList.remove('active')); document.getElementById('ftab-'+id).classList.remove('hidden'); document.getElementById('fbtn-'+id).classList.add('active'); if(id==='resumen') updateCharts(); if(id==='categorias') window.renderCategorySortList(); }
 
         window.saveCapital = async function(e) { e.preventDefault(); finState.capital = parseFloat(document.getElementById('input-capital').value)||0; await saveFinances(); alert('Capital fijado.'); }
         
@@ -792,7 +853,47 @@
             const elFG = document.getElementById('float-ganancia');
             if(elFG) elFG.innerText = `S/ ${gPend.toFixed(2)}`;
 
-            window.renderComprasTable(); window.renderVentasTable(); window.renderGastosTable(); window.renderMensualTable(); updateDatalists();
+            window.renderComprasTable(); window.renderVentasTable(); window.renderGastosTable(); window.renderMensualTable(); updateDatalists(); window.renderCategorySortList();
+        }
+
+        // === LÓGICA DE ORDEN DE CATEGORÍAS EN ADMIN ===
+        window.renderCategorySortList = function() {
+            const list = document.getElementById('category-sort-list');
+            if(!list) return;
+
+            // Extraer todas las categorías únicas existentes en los productos
+            let allCats = [...new Set(products.map(p => p.category || 'Sin Categoría'))];
+            
+            // Asegurar que finState.categoryOrder contenga todas las categorías actuales
+            let currentOrder = finState.categoryOrder || [];
+            allCats.forEach(c => {
+                if (!currentOrder.includes(c)) currentOrder.push(c);
+            });
+            // Limpiar categorías que ya no existen en allCats
+            finState.categoryOrder = currentOrder.filter(c => allCats.includes(c));
+
+            // Renderizar la lista en base a finState.categoryOrder
+            list.innerHTML = '';
+            finState.categoryOrder.forEach(c => {
+                list.innerHTML += `<div data-cat="${c}" class="grab-handle bg-white/5 p-4 rounded-xl flex items-center justify-between border border-white/10">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-grip-vertical text-gray-500"></i>
+                        <span class="font-bold text-cyan-300">${c}</span>
+                    </div>
+                </div>`;
+            });
+
+            // Inicializar Sortable para categorías
+            if (catSortableInstance) catSortableInstance.destroy();
+            catSortableInstance = Sortable.create(list, {
+                animation: 150,
+                onEnd: async function (evt) {
+                    const rows = list.querySelectorAll('[data-cat]');
+                    finState.categoryOrder = Array.from(rows).map(r => r.getAttribute('data-cat'));
+                    await saveFinances(); // Guarda el nuevo orden en la nube
+                    window.renderStore(); // Actualiza la tienda visualmente
+                }
+            });
         }
 
         function updateDatalists() { 
@@ -833,12 +934,15 @@
                 grouped[cat].push(p);
             });
 
-            const sortedCategories = Object.keys(grouped).sort();
+            // Ordenar categorías según el orden definido
+            let sortedCategories = Object.keys(grouped);
+            sortedCategories.sort((a, b) => sortCats(a, b));
+
+            let html = '';
             sortedCategories.forEach(cat => {
                 grouped[cat].sort((a, b) => (a.order || 999999) - (b.order || 999999));
             });
 
-            let html = '';
             sortedCategories.forEach(cat => {
                 html += `<tr class="cat-header bg-white/5 border-b border-t border-white/10">
                     <td colspan="6" class="p-3 font-bold text-cyan-300 uppercase tracking-wider text-sm">
@@ -966,7 +1070,6 @@
                 }
             });
 
-            // Gráfico de Evolución actualizado con dos líneas
             chartRInstance = new Chart(document.getElementById('chartRendimiento'), {
                 type: 'line',
                 data: {
