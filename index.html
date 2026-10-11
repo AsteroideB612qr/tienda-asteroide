@@ -377,7 +377,6 @@
             return safeNum(v.precioC) * safeNum(v.cantidad);
         };
 
-        // Sort function for categories
         const sortCats = (a, b) => {
             const order = finState.categoryOrder || [];
             const ia = order.indexOf(a);
@@ -456,13 +455,13 @@
                     categoryOrder: data.categoryOrder || []
                 };
                 updateAllDOM();
+                window.renderStore(); // Forzar re-render de la tienda cuando llegan las finanzas
                 if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) {
                     window.renderCategorySortList();
                 }
             }
         });
 
-        // --- TIENDA CON CATEGORÍAS COLAPSABLES ---
         window.toggleCategory = function(catId) {
             const grid = document.getElementById('grid-' + catId);
             const header = document.getElementById('header-' + catId);
@@ -730,6 +729,17 @@
                     }
                     await addDoc(collection(db, "products"), { name, category, desc, price, img, units, order: products.length });
                 }
+
+                // Sincronizar nuevas categorías con finState.categoryOrder
+                let allCats = [...new Set(products.map(p => p.category || 'Sin Categoría'))];
+                let currentOrder = finState.categoryOrder || [];
+                let needsSave = false;
+                allCats.forEach(c => {
+                    if (!currentOrder.includes(c)) { currentOrder.push(c); needsSave = true; }
+                });
+                finState.categoryOrder = currentOrder.filter(c => allCats.includes(c));
+                if (needsSave) await saveFinances();
+
                 window.resetCompraForm();
             } catch(err) { alert("Error: " + err.message); }
             finally { submitBtn.innerHTML = 'Guardar Producto'; submitBtn.disabled = false; }
@@ -856,23 +866,17 @@
             window.renderComprasTable(); window.renderVentasTable(); window.renderGastosTable(); window.renderMensualTable(); updateDatalists(); window.renderCategorySortList();
         }
 
-        // === LÓGICA DE ORDEN DE CATEGORÍAS EN ADMIN ===
         window.renderCategorySortList = function() {
             const list = document.getElementById('category-sort-list');
             if(!list) return;
 
-            // Extraer todas las categorías únicas existentes en los productos
             let allCats = [...new Set(products.map(p => p.category || 'Sin Categoría'))];
-            
-            // Asegurar que finState.categoryOrder contenga todas las categorías actuales
             let currentOrder = finState.categoryOrder || [];
             allCats.forEach(c => {
                 if (!currentOrder.includes(c)) currentOrder.push(c);
             });
-            // Limpiar categorías que ya no existen en allCats
             finState.categoryOrder = currentOrder.filter(c => allCats.includes(c));
 
-            // Renderizar la lista en base a finState.categoryOrder
             list.innerHTML = '';
             finState.categoryOrder.forEach(c => {
                 list.innerHTML += `<div data-cat="${c}" class="grab-handle bg-white/5 p-4 rounded-xl flex items-center justify-between border border-white/10">
@@ -883,15 +887,14 @@
                 </div>`;
             });
 
-            // Inicializar Sortable para categorías
             if (catSortableInstance) catSortableInstance.destroy();
             catSortableInstance = Sortable.create(list, {
                 animation: 150,
                 onEnd: async function (evt) {
                     const rows = list.querySelectorAll('[data-cat]');
                     finState.categoryOrder = Array.from(rows).map(r => r.getAttribute('data-cat'));
-                    await saveFinances(); // Guarda el nuevo orden en la nube
-                    window.renderStore(); // Actualiza la tienda visualmente
+                    await saveFinances(); 
+                    window.renderStore(); 
                 }
             });
         }
@@ -934,7 +937,6 @@
                 grouped[cat].push(p);
             });
 
-            // Ordenar categorías según el orden definido
             let sortedCategories = Object.keys(grouped);
             sortedCategories.sort((a, b) => sortCats(a, b));
 
