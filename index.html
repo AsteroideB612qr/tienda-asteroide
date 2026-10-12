@@ -235,10 +235,13 @@
                         <input type="text" id="search-compras" oninput="window.renderComprasTable()" placeholder="Buscar..." class="fin-input text-xs w-40">
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left">
+                        <table class="w-full text-left" style="table-layout: fixed;">
+                            <colgroup>
+                                <col style="width: 40px;"><col style="width: 60px;"><col style="width: auto;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 120px;">
+                            </colgroup>
                             <thead>
                                 <tr class="fin-table-head text-xs uppercase">
-                                    <th class="p-4 w-8"></th>
+                                    <th class="p-4"></th>
                                     <th class="p-4">Img</th>
                                     <th class="p-4">Producto</th>
                                     <th class="p-4">Total Stock</th>
@@ -428,6 +431,8 @@
                 }
                 products.push({ id: d.id, ...data });
             });
+            // Global sort by order
+            products.sort((a, b) => (a.order || 999999) - (b.order || 999999));
             window.renderStore();
             if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) {
                 window.renderComprasTable();
@@ -475,6 +480,8 @@
             const queryStr = searchInput ? searchInput.value.toLowerCase().trim() : '';
             
             let availableProducts = products.filter(p => p.units.length > 0);
+            // Global sort applied here to ensure store matches admin order
+            availableProducts.sort((a, b) => (a.order || 999999) - (b.order || 999999));
             
             if (queryStr) {
                 availableProducts = availableProducts.filter(p => 
@@ -495,6 +502,7 @@
 
             categories.forEach(cat => { 
                 const catId = cat.replace(/[^a-zA-Z0-9]/g, '');
+                // Filter preserves the globally sorted order
                 const ps = availableProducts.filter(p => (p.category || 'Sin Categoría') === cat); 
                 c.innerHTML += `<div>
                     <h4 id="header-${catId}" onclick="window.toggleCategory('${catId}')" class="text-2xl font-bold mb-8 pl-4 border-l-4 border-cyan-400 cursor-pointer flex items-center gap-3 hover:text-cyan-300 transition select-none">
@@ -940,10 +948,12 @@
             sortedCategories.sort((a, b) => sortCats(a, b));
 
             let html = '';
-            sortedCategories.forEach(cat => {
+            sortedCategories.forEach((cat, catIndex) => {
                 grouped[cat].sort((a, b) => (a.order || 999999) - (b.order || 999999));
                 
-                html += `<table class="w-full text-left mb-8"><tbody class="cat-tbody" data-cat="${cat}">`;
+                html += `<table class="w-full text-left mb-8" style="table-layout: fixed;"><colgroup>
+                <col style="width: 40px;"><col style="width: 60px;"><col style="width: auto;"><col style="width: 100px;"><col style="width: 100px;"><col style="width: 120px;">
+                </colgroup><tbody class="cat-tbody" id="tbody-${catIndex}">`;
                 html += `<tr class="cat-header bg-white/5 border-b border-t border-white/10">
                     <td colspan="6" class="p-3 font-bold text-cyan-300 uppercase tracking-wider text-sm">
                         <i class="fas fa-tags mr-2"></i>${cat}
@@ -954,7 +964,7 @@
                     html += `<tr data-id="${p.id}" class="fin-row grab-handle">
                         <td class="p-4 text-gray-500"><i class="fas fa-grip-vertical"></i></td>
                         <td class="p-4"><img src="${p.img}" class="w-10 h-10 rounded-lg"></td>
-                        <td class="p-4 font-medium">${p.name}</td>
+                        <td class="p-4 font-medium truncate">${p.name}</td>
                         <td class="p-4 font-bold">${p.units.length}u</td>
                         <td class="p-4">S/ ${safeNum(p.price).toFixed(2)}</td>
                         <td class="p-4 text-right whitespace-nowrap">
@@ -993,40 +1003,20 @@
             }
 
             // Inicializar Sortable para cada tbody de categoría independientemente
-            document.querySelectorAll('.cat-tbody').forEach(tbody => {
+            document.querySelectorAll('.cat-tbody').forEach((tbody, catIndex) => {
                 const inst = Sortable.create(tbody, {
                     handle: '.grab-handle',
                     draggable: '.grab-handle', // Solo las filas de productos son arrastrables
                     animation: 150,
-                    group: 'products', // Permite mover entre categorías si se desea
                     onEnd: async function (evt) {
-                        const item = evt.item;
-                        const toBody = evt.to;
-                        const fromBody = evt.from;
-                        const newCat = toBody.getAttribute('data-cat');
-
+                        const rows = tbody.querySelectorAll('tr[data-id]');
                         const batch = writeBatch(db);
-
-                        // Actualizar el orden y categoría de los items en el destino
-                        const toRows = toBody.querySelectorAll('tr[data-id]');
-                        toRows.forEach((row, index) => {
+                        // Offset por categoría para evitar colisiones globales de orden
+                        const offset = catIndex * 10000;
+                        rows.forEach((row, index) => {
                             const id = row.getAttribute('data-id');
-                            const data = { order: index };
-                            if (id === item.getAttribute('data-id')) {
-                                data.category = newCat; // Actualizar categoría si fue movido a otra
-                            }
-                            batch.update(doc(db, "products", id), data);
+                            batch.update(doc(db, "products", id), { order: offset + index });
                         });
-
-                        // Si se movió de una categoría a otra, recalcular el origen
-                        if (fromBody !== toBody) {
-                            const fromRows = fromBody.querySelectorAll('tr[data-id]');
-                            fromRows.forEach((row, index) => {
-                                const id = row.getAttribute('data-id');
-                                batch.update(doc(db, "products", id), { order: index });
-                            });
-                        }
-
                         try { 
                             await batch.commit(); 
                         } catch (e) { 
