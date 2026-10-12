@@ -351,7 +351,8 @@
         let subscribers = [];
         let cart = JSON.parse(localStorage.getItem('b612_cart')) || [];
         let isAdmin = false;
-        let finState = { capital: 0, ventas: [], gastos: [], categoryOrder: [] };
+        let finState = { capital: 0, ventas: [], gastos: [] };
+        let categoryOrder = []; // Separado de finState para que sea público
         let expandedProductId = null;
         let sortableInstances = []; 
         let catSortableInstance = null;
@@ -381,7 +382,7 @@
         };
 
         const sortCats = (a, b) => {
-            const order = finState.categoryOrder || [];
+            const order = categoryOrder || [];
             const ia = order.indexOf(a);
             const ib = order.indexOf(b);
             if (ia === -1 && ib === -1) return a.localeCompare(b);
@@ -431,7 +432,6 @@
                 }
                 products.push({ id: d.id, ...data });
             });
-            // Global sort by order
             products.sort((a, b) => (a.order || 999999) - (b.order || 999999));
             window.renderStore();
             if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) {
@@ -455,16 +455,35 @@
                 finState = {
                     capital: data.capital || 0,
                     ventas: data.ventas || [],
-                    gastos: data.gastos || [],
-                    categoryOrder: data.categoryOrder || []
+                    gastos: data.gastos || []
                 };
                 updateAllDOM();
-                window.renderStore(); 
-                if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) {
-                    window.renderCategorySortList();
-                }
+                updateCharts();
             }
         });
+
+        // Listener separado para settings (público para que la tienda lo lea sin login)
+        const settingsRef = doc(db, "data", "settings");
+        onSnapshot(settingsRef, (snap) => {
+            if (snap.exists()) {
+                categoryOrder = snap.data().categoryOrder || [];
+            } else {
+                categoryOrder = [];
+            }
+            window.renderStore(); // Forzar re-render de la tienda cuando llegan los settings
+            if (!document.getElementById('admin-finanzas-view').classList.contains('hidden')) {
+                window.renderCategorySortList();
+            }
+        });
+
+        async function saveSettings() {
+            try {
+                await setDoc(settingsRef, { categoryOrder });
+            } catch (e) {
+                alert("Error guardando configuración de categorías: " + e.message);
+            }
+        }
+        window.saveSettings = saveSettings;
 
         window.toggleCategory = function(catId) {
             const grid = document.getElementById('grid-' + catId);
@@ -480,7 +499,6 @@
             const queryStr = searchInput ? searchInput.value.toLowerCase().trim() : '';
             
             let availableProducts = products.filter(p => p.units.length > 0);
-            // Global sort applied here to ensure store matches admin order
             availableProducts.sort((a, b) => (a.order || 999999) - (b.order || 999999));
             
             if (queryStr) {
@@ -502,7 +520,6 @@
 
             categories.forEach(cat => { 
                 const catId = cat.replace(/[^a-zA-Z0-9]/g, '');
-                // Filter preserves the globally sorted order
                 const ps = availableProducts.filter(p => (p.category || 'Sin Categoría') === cat); 
                 c.innerHTML += `<div>
                     <h4 id="header-${catId}" onclick="window.toggleCategory('${catId}')" class="text-2xl font-bold mb-8 pl-4 border-l-4 border-cyan-400 cursor-pointer flex items-center gap-3 hover:text-cyan-300 transition select-none">
@@ -590,7 +607,11 @@
         let chartBInstance = null; let chartRInstance = null;
 
         async function saveFinances() {
-            await setDoc(finRef, finState);
+            try {
+                await setDoc(finRef, finState);
+            } catch(e) {
+                alert("Error guardando finanzas: " + e.message);
+            }
             updateAllDOM();
             updateCharts();
         }
@@ -604,17 +625,20 @@
                 prodSnapshot.forEach((d) => batch.delete(d.ref));
                 await batch.commit();
 
-                finState = { capital: 0, ventas: [], gastos: [], categoryOrder: [] };
+                finState = { capital: 0, ventas: [], gastos: [] };
                 await setDoc(finRef, finState);
+                categoryOrder = [];
+                await setDoc(settingsRef, { categoryOrder });
                 
                 alert('Sistema reiniciado a cero.');
                 updateAllDOM();
                 updateCharts();
+                window.renderStore();
             } catch (e) { alert('Error al reiniciar: ' + e.message); }
         }
 
         window.exportarDatosUSB = function() { 
-            const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({capital: finState.capital, ventas: finState.ventas, gastos: finState.gastos, categoryOrder: finState.categoryOrder, inventario: products.map(p => ({...p, units: p.units}))}, null, 2)); 
+            const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({capital: finState.capital, ventas: finState.ventas, gastos: finState.gastos, categoryOrder: categoryOrder, inventario: products.map(p => ({...p, units: p.units}))}, null, 2)); 
             const a = document.createElement('a'); a.href=d; a.download="asteroide_backup.json"; a.click(); 
         }
         
@@ -679,7 +703,9 @@
                             }
                         });
                     }
-                    finState = { capital: parsed.capital || 0, ventas: parsed.ventas || [], gastos: parsed.gastos || [], categoryOrder: parsed.categoryOrder || [] };
+                    finState = { capital: parsed.capital || 0, ventas: parsed.ventas || [], gastos: parsed.gastos || [] };
+                    categoryOrder = parsed.categoryOrder || [];
+                    await setDoc(settingsRef, { categoryOrder });
                     await saveFinances(); 
                     e.target.value = ''; 
                     alert("¡Migración exitosa! Datos limpios cargados."); 
@@ -738,13 +764,13 @@
                 }
 
                 let allCats = [...new Set(products.map(p => p.category || 'Sin Categoría'))];
-                let currentOrder = finState.categoryOrder || [];
+                let currentOrder = categoryOrder || [];
                 let needsSave = false;
                 allCats.forEach(c => {
                     if (!currentOrder.includes(c)) { currentOrder.push(c); needsSave = true; }
                 });
-                finState.categoryOrder = currentOrder.filter(c => allCats.includes(c));
-                if (needsSave) await saveFinances();
+                categoryOrder = currentOrder.filter(c => allCats.includes(c));
+                if (needsSave) await saveSettings();
 
                 window.resetCompraForm();
             } catch(err) { alert("Error: " + err.message); }
@@ -877,14 +903,14 @@
             if(!list) return;
 
             let allCats = [...new Set(products.map(p => p.category || 'Sin Categoría'))];
-            let currentOrder = finState.categoryOrder || [];
+            let currentOrder = categoryOrder || [];
             allCats.forEach(c => {
                 if (!currentOrder.includes(c)) currentOrder.push(c);
             });
-            finState.categoryOrder = currentOrder.filter(c => allCats.includes(c));
+            categoryOrder = currentOrder.filter(c => allCats.includes(c));
 
             list.innerHTML = '';
-            finState.categoryOrder.forEach(c => {
+            categoryOrder.forEach(c => {
                 list.innerHTML += `<div data-cat="${c}" class="grab-handle bg-white/5 p-4 rounded-xl flex items-center justify-between border border-white/10">
                     <div class="flex items-center gap-3">
                         <i class="fas fa-grip-vertical text-gray-500"></i>
@@ -898,8 +924,8 @@
                 animation: 150,
                 onEnd: async function (evt) {
                     const rows = list.querySelectorAll('[data-cat]');
-                    finState.categoryOrder = Array.from(rows).map(r => r.getAttribute('data-cat'));
-                    await saveFinances(); 
+                    categoryOrder = Array.from(rows).map(r => r.getAttribute('data-cat'));
+                    await saveSettings(); 
                     window.renderStore(); 
                 }
             });
@@ -921,7 +947,6 @@
             window.renderComprasTable();
         }
 
-        // === RENDER INVENTARIO POR TBODIES INDEPENDIENTES ===
         window.renderComprasTable = function() { 
             const t = document.getElementById('table-compras-body'); 
             if(!t) return; 
@@ -996,22 +1021,19 @@
             });
             t.innerHTML = html;
 
-            // Destruir instancias previas de Sortable
             if (sortableInstances.length > 0) {
                 sortableInstances.forEach(s => s.destroy());
                 sortableInstances = [];
             }
 
-            // Inicializar Sortable para cada tbody de categoría independientemente
             document.querySelectorAll('.cat-tbody').forEach((tbody, catIndex) => {
                 const inst = Sortable.create(tbody, {
                     handle: '.grab-handle',
-                    draggable: '.grab-handle', // Solo las filas de productos son arrastrables
+                    draggable: '.grab-handle', 
                     animation: 150,
                     onEnd: async function (evt) {
                         const rows = tbody.querySelectorAll('tr[data-id]');
                         const batch = writeBatch(db);
-                        // Offset por categoría para evitar colisiones globales de orden
                         const offset = catIndex * 10000;
                         rows.forEach((row, index) => {
                             const id = row.getAttribute('data-id');
